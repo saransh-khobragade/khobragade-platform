@@ -1,7 +1,8 @@
 import type { LucideIcon } from "lucide-react"
-import { CheckSquare, Hash } from "lucide-react"
+import { CheckSquare, Hash, FileJson } from "lucide-react"
 import { TodoApp } from "@/apps/todo/TodoApp.js"
 import { MD5Converter } from "@/apps/md5-converter/MD5Converter.js"
+import { JsonFormatter } from "@/apps/json-formatter/JsonFormatter.js"
 import type { ComponentType } from "react"
 
 export interface AppConfig {
@@ -29,6 +30,14 @@ export const apps: AppConfig[] = [
     icon: Hash,
     path: "/md5-converter",
     component: MD5Converter,
+  },
+  {
+    id: "json-formatter",
+    title: "JSON Formatter",
+    description: "Format and validate JSON with customizable indentation",
+    icon: FileJson,
+    path: "/json-formatter",
+    component: JsonFormatter,
   },
 ]
 
