@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Copy, Loader2, Hash } from "lucide-react"
+import { Copy, Loader2, Hash, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -16,6 +16,7 @@ export function MD5Converter() {
   const [hash, setHash] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const handleConvert = async () => {
     if (input.trim() === "" || loading) return
@@ -37,9 +38,13 @@ export function MD5Converter() {
     if (!hash) return
     try {
       await navigator.clipboard.writeText(hash)
-      // You could add a toast notification here
+      setCopied(true)
+      setTimeout(() => {
+        setCopied(false)
+      }, 2000)
     } catch (err) {
       console.error("Failed to copy:", err)
+      setError("Failed to copy to clipboard")
     }
   }
 
@@ -100,14 +105,24 @@ export function MD5Converter() {
                   className="font-mono text-sm"
                 />
                 <Button
-                  variant="outline"
+                  variant={copied ? "default" : "outline"}
                   size="icon"
                   onClick={handleCopy}
-                  title="Copy to clipboard"
+                  title={copied ? "Copied!" : "Copy to clipboard"}
+                  className={copied ? "bg-green-600 hover:bg-green-700" : ""}
                 >
-                  <Copy className="h-4 w-4" />
+                  {copied ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
+              {copied && (
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  Copied to clipboard!
+                </p>
+              )}
             </div>
           )}
         </CardContent>
