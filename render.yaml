@@ -1,0 +1,41 @@
+version: "1"
+
+databases:
+- name: postgres
+  databaseName: render_db
+  user: render_db_user
+  plan: free
+  region: oregon
+  ipAllowList:
+  - source: 0.0.0.0/0
+    description: everywhere
+  postgresMajorVersion: "18"
+
+services:
+- type: web
+  name: backend
+  runtime: node
+  repo: https://github.com/saransh-khobragade/render-boilerplate
+  plan: free
+  envVars:
+  - key: DATABASE_URL
+    sync: false
+  - key: PORT
+    sync: false
+  region: oregon
+  buildCommand: bun install && bun run build
+  startCommand: bun run start
+  autoDeployTrigger: commit
+  rootDir: backend
+
+- type: web
+  name: frontend
+  runtime: static
+  repo: https://github.com/saransh-khobragade/render-boilerplate
+  envVars:
+  - key: VITE_API_URL/api
+    sync: false
+  buildCommand: bun run build
+  staticPublishPath: dist
+  autoDeployTrigger: commit
+  rootDir: frontend
