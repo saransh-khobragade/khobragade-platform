@@ -29,7 +29,7 @@ services:
   rootDir: backend
 
 - type: web
-  name: frontend
+  name: khobragade
   runtime: static
   repo: https://github.com/saransh-khobragade/render-boilerplate
   envVars:

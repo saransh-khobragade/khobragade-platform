@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import pinoHttp from "pino-http"
 import prisma from "./db/index.js"
 import todosRouter from "./routes/todos.js"
+import md5Router from "./routes/md5.js"
 import { logger } from "./lib/logger.js"
 
 dotenv.config()
@@ -76,6 +77,9 @@ app.get("/api/test-db", async (req, res) => {
 
 // Todo routes
 app.use("/api/todos", todosRouter)
+
+// MD5 routes
+app.use("/api/md5", md5Router)
 
 // Graceful shutdown
 process.on("SIGINT", async () => {
