@@ -9,43 +9,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { md5Api } from "@/lib/api"
+import { useMD5Converter } from "./hooks/useMD5Converter.js"
+import { useCopyToClipboard } from "./hooks/useCopyToClipboard.js"
 
 export function MD5Converter() {
   const [input, setInput] = useState("")
-  const [hash, setHash] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const { hash, loading, error, convert } = useMD5Converter()
+  const { copied, copy } = useCopyToClipboard()
 
   const handleConvert = async () => {
     if (input.trim() === "" || loading) return
-
     try {
-      setLoading(true)
-      setError(null)
-      const result = await md5Api.convert(input.trim())
-      setHash(result.hash)
+      await convert(input.trim())
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to convert to MD5")
-      setHash(null)
-    } finally {
-      setLoading(false)
+      // Error is handled by the hook
     }
   }
 
   const handleCopy = async () => {
     if (!hash) return
-    try {
-      await navigator.clipboard.writeText(hash)
-      setCopied(true)
-      setTimeout(() => {
-        setCopied(false)
-      }, 2000)
-    } catch (err) {
-      console.error("Failed to copy:", err)
-      setError("Failed to copy to clipboard")
-    }
+    await copy(hash)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

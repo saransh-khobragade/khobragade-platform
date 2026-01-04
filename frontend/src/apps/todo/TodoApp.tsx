@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Plus, Trash2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,82 +10,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { todoApi, type Todo } from "@/lib/api"
+import { useTodos } from "./hooks/useTodos.js"
 
 export function TodoApp() {
-  const [todos, setTodos] = useState<Todo[]>([])
   const [inputValue, setInputValue] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
+  const { todos, loading, error, fetchTodos, addTodo, toggleTodo, deleteTodo } = useTodos()
 
-  // Fetch todos on mount
-  useEffect(() => {
-    fetchTodos()
-  }, [])
-
-  const fetchTodos = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await todoApi.getAll()
-      setTodos(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load todos")
-      console.error("Error fetching todos:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const addTodo = async () => {
+  const handleAddTodo = async () => {
     if (inputValue.trim() === "" || adding) return
 
     try {
       setAdding(true)
-      setError(null)
-      const newTodo = await todoApi.create(inputValue.trim())
-      setTodos([newTodo, ...todos])
+      await addTodo(inputValue.trim())
       setInputValue("")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create todo")
-      console.error("Error creating todo:", err)
+      // Error is handled by the hook
     } finally {
       setAdding(false)
-    }
-  }
-
-  const toggleTodo = async (id: string) => {
-    const todo = todos.find((t) => t.id === id)
-    if (!todo) return
-
-    try {
-      setError(null)
-      const updatedTodo = await todoApi.update(id, { completed: !todo.completed })
-      setTodos(todos.map((t) => (t.id === id ? updatedTodo : t)))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update todo")
-      console.error("Error updating todo:", err)
-      // Revert optimistic update
-      fetchTodos()
-    }
-  }
-
-  const deleteTodo = async (id: string) => {
-    try {
-      setError(null)
-      await todoApi.delete(id)
-      setTodos(todos.filter((todo) => todo.id !== id))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete todo")
-      console.error("Error deleting todo:", err)
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault()
-      addTodo()
+      handleAddTodo()
     }
   }
 
@@ -129,7 +78,7 @@ export function TodoApp() {
               disabled={adding}
               className="flex-1"
             />
-            <Button onClick={addTodo} size="icon" disabled={adding || inputValue.trim() === ""}>
+            <Button onClick={handleAddTodo} size="icon" disabled={adding || inputValue.trim() === ""}>
               {adding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (

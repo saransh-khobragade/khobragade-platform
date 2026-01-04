@@ -1,11 +1,10 @@
 import { Routes, Route, Link, useLocation } from "react-router-dom"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ModeToggle } from "@/components/mode-toggle"
-import { TodoApp } from "@/components/todo-app"
 import { HomePage } from "@/components/home-page"
-import { MD5Converter } from "@/components/md5-converter"
 import { Button } from "@/components/ui/button"
 import { Home } from "lucide-react"
+import { apps } from "@/config/apps.js"
 
 function Navigation() {
   const location = useLocation()
@@ -36,8 +35,9 @@ function App() {
           <Navigation />
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/todos" element={<TodoApp />} />
-            <Route path="/md5-converter" element={<MD5Converter />} />
+            {apps.map((app) => (
+              <Route key={app.id} path={app.path} element={<app.component />} />
+            ))}
           </Routes>
         </div>
       </div>

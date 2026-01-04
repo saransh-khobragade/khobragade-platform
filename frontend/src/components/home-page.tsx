@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom"
-import { CheckSquare, Hash } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -7,24 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { apps } from "@/config/apps.js"
 
 export function HomePage() {
-  const projects = [
-    {
-      id: "todos",
-      title: "Todo App",
-      description: "Manage your tasks with a full-featured todo list application",
-      icon: CheckSquare,
-      path: "/todos",
-    },
-    {
-      id: "md5",
-      title: "MD5 Converter",
-      description: "Convert any text string to its MD5 hash",
-      icon: Hash,
-      path: "/md5-converter",
-    },
-  ]
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
@@ -36,17 +20,17 @@ export function HomePage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {projects.map((project) => {
-          const Icon = project.icon
+        {apps.map((app) => {
+          const Icon = app.icon
           return (
-            <Link key={project.id} to={project.path} className="block">
+            <Link key={app.id} to={app.path} className="block">
               <Card className="h-full transition-all hover:shadow-lg hover:scale-105 cursor-pointer">
                 <CardHeader>
                   <div className="flex items-center gap-3 mb-2">
                     <Icon className="h-6 w-6" />
-                    <CardTitle>{project.title}</CardTitle>
+                    <CardTitle>{app.title}</CardTitle>
                   </div>
-                  <CardDescription>{project.description}</CardDescription>
+                  <CardDescription>{app.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">

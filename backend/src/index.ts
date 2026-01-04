@@ -3,8 +3,8 @@ import cors from "cors"
 import dotenv from "dotenv"
 import pinoHttp from "pino-http"
 import prisma from "./db/index.js"
-import todosRouter from "./routes/todos.js"
-import md5Router from "./routes/md5.js"
+import todosRouter from "./apps/todo/routes.js"
+import md5Router from "./apps/md5-converter/routes.js"
 import { logger } from "./lib/logger.js"
 
 dotenv.config()
