@@ -15,7 +15,7 @@ services:
 - type: web
   name: backend
   runtime: node
-  repo: https://github.com/saransh-khobragade/render-boilerplate
+  repo: https://github.com/saransh-khobragade/khobragade-platform
   plan: free
   envVars:
   - key: DATABASE_URL
@@ -31,7 +31,7 @@ services:
 - type: web
   name: khobragade
   runtime: static
-  repo: https://github.com/saransh-khobragade/render-boilerplate
+  repo: https://github.com/saransh-khobragade/khobragade-platform
   envVars:
   - key: VITE_API_URL
     sync: false
