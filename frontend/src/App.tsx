@@ -5,6 +5,7 @@ import { HomePage } from "@/components/home-page"
 import { Button } from "@/components/ui/button"
 import { Home } from "lucide-react"
 import { apps } from "@/config/apps.js"
+import { NotesApp } from "@/apps/notes/NotesApp.js"
 
 function Navigation() {
   const location = useLocation()
@@ -38,6 +39,8 @@ function App() {
             {apps.map((app) => (
               <Route key={app.id} path={app.path} element={<app.component />} />
             ))}
+            {/* Notes with shareId */}
+            <Route path="/notes/:shareId" element={<NotesApp />} />
           </Routes>
         </div>
       </div>

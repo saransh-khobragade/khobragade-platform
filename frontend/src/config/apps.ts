@@ -1,9 +1,10 @@
 import type { LucideIcon } from "lucide-react"
-import { CheckSquare, Hash, FileJson, GitCompare } from "lucide-react"
+import { CheckSquare, Hash, FileJson, GitCompare, FileText } from "lucide-react"
 import { TodoApp } from "@/apps/todo/TodoApp.js"
 import { MD5Converter } from "@/apps/md5-converter/MD5Converter.js"
 import { JsonFormatter } from "@/apps/json-formatter/JsonFormatter.js"
 import { JsonCompare } from "@/apps/json-compare/JsonCompare.js"
+import { NotesApp } from "@/apps/notes/NotesApp.js"
 import type { ComponentType } from "react"
 
 export interface AppConfig {
@@ -47,6 +48,14 @@ export const apps: AppConfig[] = [
     icon: GitCompare,
     path: "/json-compare",
     component: JsonCompare,
+  },
+  {
+    id: "notes",
+    title: "Notes Share",
+    description: "Create and share notes with shareable links",
+    icon: FileText,
+    path: "/notes",
+    component: NotesApp,
   },
 ]
 
