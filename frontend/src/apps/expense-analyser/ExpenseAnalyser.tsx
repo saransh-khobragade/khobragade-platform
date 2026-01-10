@@ -1,0 +1,310 @@
+import { useState, useRef } from "react"
+import { Upload, Loader2, TrendingUp, Tag, Calendar } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+} from "recharts"
+import { useExpenseAnalyser } from "./hooks/useExpenseAnalyser.js"
+
+const COLORS = [
+  "#8884d8",
+  "#82ca9d",
+  "#ffc658",
+  "#ff7300",
+  "#8dd1e1",
+  "#d084d0",
+  "#ffb347",
+  "#87ceeb",
+]
+
+export function ExpenseAnalyser() {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const { analysis, loading, error, processFile, reset } = useExpenseAnalyser()
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      reset()
+    }
+  }
+
+  const handleUpload = async () => {
+    if (selectedFile) {
+      await processFile(selectedFile)
+    }
+  }
+
+  const handleReset = () => {
+    setSelectedFile(null)
+    reset()
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  return (
+    <div className="w-full max-w-7xl mx-auto p-4 space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <TrendingUp className="h-6 w-6" />
+            <CardTitle>Expense Analyser</CardTitle>
+          </div>
+          <CardDescription>
+            Upload your transaction history Excel file to analyze your spending patterns
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!analysis && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Upload Excel File:</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  onChange={handleFileSelect}
+                  className="w-full p-2 border rounded-md bg-background"
+                  disabled={loading}
+                />
+              </div>
+
+              {error && (
+                <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleUpload}
+                  disabled={!selectedFile || loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Process File
+                    </>
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {analysis && (
+            <>
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Analysis Results</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {analysis.transactions.length} transactions analyzed
+                  </p>
+                </div>
+                <Button variant="outline" onClick={handleReset}>
+                  Upload New File
+                </Button>
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Total Withdrawals</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      ₹{analysis.totalWithdrawals.toLocaleString("en-IN", {
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Total Deposits</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">
+                      ₹{analysis.totalDeposits.toLocaleString("en-IN", {
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Net Amount</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div
+                      className={`text-2xl font-bold ${
+                        analysis.netAmount >= 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      ₹{analysis.netAmount.toLocaleString("en-IN", {
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Transaction Trend */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    <CardTitle>Transaction Trend</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Credit and debit transactions day by day
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart data={analysis.timePeriodAnalysis}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="period" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                        tickFormatter={(value) => {
+                          // Format YYYY-MM-DD to DD/MM
+                          const parts = value.split("-")
+                          if (parts.length === 3) {
+                            return `${parts[2]}/${parts[1]}`
+                          }
+                          return value
+                        }}
+                      />
+                      <YAxis />
+                      <Tooltip
+                        formatter={(value: number) =>
+                          `₹${value.toLocaleString("en-IN", {
+                            maximumFractionDigits: 2,
+                          })}`
+                        }
+                        labelFormatter={(value) => {
+                          // Format YYYY-MM-DD to DD/MM/YYYY
+                          const parts = value.split("-")
+                          if (parts.length === 3) {
+                            return `${parts[2]}/${parts[1]}/${parts[0]}`
+                          }
+                          return value
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="credit" fill="#82ca9d" name="Credit (₹)" />
+                      <Bar dataKey="debit" fill="#ff7300" name="Debit (₹)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Category Analysis */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-5 w-5" />
+                    <CardTitle>Spending by Category</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Breakdown of expenses by category
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <ResponsiveContainer width="100%" height={400}>
+                      <PieChart>
+                        <Pie
+                          data={analysis.categoryAnalysis}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ category, percent }) =>
+                            `${category}: ${(percent * 100).toFixed(0)}%`
+                          }
+                          outerRadius={120}
+                          fill="#8884d8"
+                          dataKey="totalAmount"
+                        >
+                          {analysis.categoryAnalysis.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: number) =>
+                            `₹${value.toLocaleString("en-IN", {
+                              maximumFractionDigits: 2,
+                            })}`
+                          }
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="space-y-2">
+                      <h4 className="font-semibold mb-4">Category Breakdown</h4>
+                      {analysis.categoryAnalysis.map((category, index) => (
+                        <div
+                          key={category.category}
+                          className="flex items-center justify-between p-2 rounded border"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-4 h-4 rounded"
+                              style={{
+                                backgroundColor: COLORS[index % COLORS.length],
+                              }}
+                            />
+                            <span className="font-medium">{category.category}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold">
+                              ₹{category.totalAmount.toLocaleString("en-IN", {
+                                maximumFractionDigits: 2,
+                              })}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {category.count} transactions
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

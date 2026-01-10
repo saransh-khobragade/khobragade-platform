@@ -30,4 +30,3 @@ model Note {
 
   @@map("notes")
 }
-

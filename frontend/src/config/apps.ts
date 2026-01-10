@@ -1,10 +1,11 @@
 import type { LucideIcon } from "lucide-react"
-import { CheckSquare, Hash, FileJson, GitCompare, FileText } from "lucide-react"
+import { CheckSquare, Hash, FileJson, GitCompare, FileText, TrendingUp } from "lucide-react"
 import { TodoApp } from "@/apps/todo/TodoApp.js"
 import { MD5Converter } from "@/apps/md5-converter/MD5Converter.js"
 import { JsonFormatter } from "@/apps/json-formatter/JsonFormatter.js"
 import { JsonCompare } from "@/apps/json-compare/JsonCompare.js"
 import { NotesApp } from "@/apps/notes/NotesApp.js"
+import { ExpenseAnalyser } from "@/apps/expense-analyser/ExpenseAnalyser.js"
 import type { ComponentType } from "react"
 
 export interface AppConfig {
@@ -56,6 +57,14 @@ export const apps: AppConfig[] = [
     icon: FileText,
     path: "/notes",
     component: NotesApp,
+  },
+  {
+    id: "expense-analyser",
+    title: "Expense Analyser",
+    description: "Analyze your transaction history and understand spending patterns",
+    icon: TrendingUp,
+    path: "/expense-analyser",
+    component: ExpenseAnalyser,
   },
 ]
 

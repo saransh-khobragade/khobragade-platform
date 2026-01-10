@@ -6,6 +6,7 @@ import prisma from "./db/index.js"
 import todosRouter from "./apps/todo/routes.js"
 import md5Router from "./apps/md5-converter/routes.js"
 import notesRouter from "./apps/notes/routes.js"
+import expenseAnalyserRouter from "./apps/expense-analyser/routes.js"
 import { logger } from "./lib/logger.js"
 
 dotenv.config()
@@ -84,6 +85,9 @@ app.use("/api/md5", md5Router)
 
 // Notes routes
 app.use("/api/notes", notesRouter)
+
+// Expense Analyser routes
+app.use("/api/expense-analyser", expenseAnalyserRouter)
 
 // Graceful shutdown
 process.on("SIGINT", async () => {
