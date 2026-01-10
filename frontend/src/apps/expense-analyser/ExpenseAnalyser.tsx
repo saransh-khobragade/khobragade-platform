@@ -18,7 +18,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
   Legend,
 } from "recharts"
 import { useExpenseAnalyser } from "./hooks/useExpenseAnalyser.js"
@@ -293,7 +292,6 @@ export function ExpenseAnalyser() {
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
                     <BarChart data={analysis.timePeriodAnalysis}>
-                      <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="period" 
                         angle={-45}
