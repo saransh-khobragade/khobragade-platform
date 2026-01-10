@@ -1,5 +1,5 @@
-import { useState, useRef } from "react"
-import { Upload, Loader2, TrendingUp, Tag, Calendar } from "lucide-react"
+import { useState, useRef, useMemo } from "react"
+import { Upload, Loader2, TrendingUp, Tag, Calendar, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -124,11 +124,66 @@ function extractCategory(remarks: string): string {
   return "Other"
 }
 
+// Extract tags from transaction remarks
+function extractTags(remarks: string): string[] {
+  const tags: string[] = []
+  const remarkLower = remarks.toLowerCase()
+  const remarkUpper = remarks.toUpperCase()
+
+  // Payment methods
+  if (remarks.includes("UPI")) tags.push("UPI")
+  if (remarks.includes("NEFT")) tags.push("NEFT")
+  if (remarks.includes("IMPS")) tags.push("IMPS")
+  if (remarks.includes("RTGS")) tags.push("RTGS")
+  if (remarks.includes("ACH")) tags.push("ACH")
+
+  // Extract merchant names from UPI transactions
+  // Pattern: UPI/MerchantName/...
+  const upiMatch = remarks.match(/UPI\/([^\/]+)/i)
+  if (upiMatch && upiMatch[1]) {
+    const merchant = upiMatch[1].trim()
+    // Clean up common suffixes
+    const cleanMerchant = merchant
+      .replace(/\s+(ind|pvt|ltd|limited|inc)$/i, "")
+      .trim()
+    if (cleanMerchant && cleanMerchant.length > 2) {
+      tags.push(cleanMerchant)
+    }
+  }
+
+  // Extract bank names
+  const bankNames = [
+    "AXIS BANK", "HDFC BANK", "ICICI BANK", "SBI", "STATE BANK",
+    "KOTAK", "PNB", "BOI", "CANARA", "UNION BANK", "RBL", "YES BANK",
+    "INDUSIND", "FEDERAL BANK", "IDFC", "BANDHAN BANK"
+  ]
+  bankNames.forEach(bank => {
+    if (remarks.toUpperCase().includes(bank)) {
+      tags.push(bank)
+    }
+  })
+
+  // Common merchant patterns
+  if (remarkLower.includes("amazon")) tags.push("Amazon")
+  if (remarkLower.includes("flipkart")) tags.push("Flipkart")
+  if (remarkLower.includes("myntra")) tags.push("Myntra")
+  if (remarkLower.includes("swiggy")) tags.push("Swiggy")
+  if (remarkLower.includes("zomato")) tags.push("Zomato")
+  if (remarkLower.includes("uber")) tags.push("Uber")
+  if (remarkLower.includes("ola")) tags.push("Ola")
+  if (remarkLower.includes("irctc")) tags.push("IRCTC")
+  if (remarkLower.includes("bookmyshow")) tags.push("BookMyShow")
+  if (remarkLower.includes("zerodha")) tags.push("Zerodha")
+
+  return [...new Set(tags)] // Remove duplicates
+}
+
 export function ExpenseAnalyser() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const { analysis, loading, error, processFile, reset } = useExpenseAnalyser()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedTag, setSelectedTag] = useState<string | null>(null)
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -147,6 +202,7 @@ export function ExpenseAnalyser() {
   const handleReset = () => {
     setSelectedFile(null)
     setSelectedCategory(null)
+    setSelectedTag(null)
     reset()
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
@@ -164,6 +220,62 @@ export function ExpenseAnalyser() {
         return category === selectedCategory
       })
       .sort((a, b) => b.withdrawalAmount - a.withdrawalAmount)
+  }
+
+  // Extract and analyze tags from category transactions
+  const categoryTags = useMemo(() => {
+    if (!analysis || !selectedCategory) return []
+    
+    // Get category transactions directly
+    const transactions = analysis.transactions
+      .filter((tx) => {
+        if (tx.withdrawalAmount === 0) return false
+        const category = extractCategory(tx.transactionRemarks)
+        return category === selectedCategory
+      })
+    
+    const tagMap = new Map<string, { count: number; totalAmount: number }>()
+    
+    transactions.forEach((tx) => {
+      const tags = extractTags(tx.transactionRemarks)
+      tags.forEach((tag) => {
+        const existing = tagMap.get(tag) || { count: 0, totalAmount: 0 }
+        tagMap.set(tag, {
+          count: existing.count + 1,
+          totalAmount: existing.totalAmount + tx.withdrawalAmount,
+        })
+      })
+    })
+    
+    return Array.from(tagMap.entries())
+      .map(([tag, data]) => ({
+        tag,
+        count: data.count,
+        totalAmount: data.totalAmount,
+      }))
+      .sort((a, b) => b.count - a.count) // Sort by frequency
+  }, [analysis, selectedCategory])
+
+  // Get filtered transactions (by category and optionally by tag)
+  const getFilteredTransactions = () => {
+    let transactions = getCategoryTransactions()
+    
+    if (selectedTag) {
+      transactions = transactions.filter((tx) => {
+        const tags = extractTags(tx.transactionRemarks)
+        return tags.includes(selectedTag)
+      })
+    }
+    
+    return transactions
+  }
+
+  // Calculate total amount for filtered transactions
+  const getTotalAmount = () => {
+    return getFilteredTransactions().reduce(
+      (sum, tx) => sum + tx.withdrawalAmount,
+      0
+    )
   }
 
   return (
@@ -425,16 +537,75 @@ export function ExpenseAnalyser() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedCategory(null)}
+                        onClick={() => {
+                          setSelectedCategory(null)
+                          setSelectedTag(null)
+                        }}
                       >
                         Close
                       </Button>
                     </div>
                     <CardDescription>
-                      {selectedCategory} - {getCategoryTransactions().length} transactions
+                      {selectedCategory}
+                      {selectedTag && ` • ${selectedTag}`} - {getFilteredTransactions().length} transactions
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-4">
+                    {/* Total Amount Display */}
+                    <div className={`p-4 rounded-lg border ${
+                      selectedTag 
+                        ? "bg-primary/10 border-primary/20" 
+                        : "bg-secondary/50 border-border"
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {selectedTag ? `Total Amount (${selectedTag}):` : "Total Amount:"}
+                        </span>
+                        <span className={`text-2xl font-bold ${
+                          selectedTag ? "text-primary" : "text-foreground"
+                        }`}>
+                          ₹{getTotalAmount().toLocaleString("en-IN", {
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Tags Section */}
+                    {categoryTags.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium">Tags:</span>
+                          {selectedTag && (
+                            <button
+                              onClick={() => setSelectedTag(null)}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+                            >
+                              All ({getCategoryTransactions().length})
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                          {categoryTags.map((tagInfo) => {
+                            const isSelected = selectedTag === tagInfo.tag
+                            return (
+                              <button
+                                key={tagInfo.tag}
+                                onClick={() => setSelectedTag(isSelected ? null : tagInfo.tag)}
+                                className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors ${
+                                  isSelected
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                }`}
+                              >
+                                {tagInfo.tag} ({tagInfo.count})
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Transactions Table */}
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse">
                         <thead>
@@ -442,11 +613,10 @@ export function ExpenseAnalyser() {
                             <th className="text-left p-2 font-semibold">Date</th>
                             <th className="text-left p-2 font-semibold">Transaction Remarks</th>
                             <th className="text-right p-2 font-semibold">Amount</th>
-                            <th className="text-right p-2 font-semibold">Balance</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {getCategoryTransactions().map((tx, index) => (
+                          {getFilteredTransactions().map((tx, index) => (
                             <tr
                               key={index}
                               className="border-b hover:bg-accent/50"
@@ -457,11 +627,6 @@ export function ExpenseAnalyser() {
                               <td className="p-2 text-sm">{tx.transactionRemarks}</td>
                               <td className="p-2 text-sm text-right font-medium">
                                 ₹{tx.withdrawalAmount.toLocaleString("en-IN", {
-                                  maximumFractionDigits: 2,
-                                })}
-                              </td>
-                              <td className="p-2 text-sm text-right text-muted-foreground">
-                                ₹{tx.balance.toLocaleString("en-IN", {
                                   maximumFractionDigits: 2,
                                 })}
                               </td>
