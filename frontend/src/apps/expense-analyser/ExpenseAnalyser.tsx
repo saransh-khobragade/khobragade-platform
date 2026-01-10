@@ -34,10 +34,102 @@ const COLORS = [
   "#87ceeb",
 ]
 
+// Extract category from transaction remarks (same logic as backend)
+function extractCategory(remarks: string): string {
+  const remarkLower = remarks.toLowerCase()
+
+  // Food & Dining
+  if (
+    remarkLower.includes("restaurant") ||
+    remarkLower.includes("food") ||
+    remarkLower.includes("subway") ||
+    remarkLower.includes("hotel") ||
+    remarkLower.includes("cafe")
+  ) {
+    return "Food & Dining"
+  }
+
+  // Shopping
+  if (
+    remarkLower.includes("myntra") ||
+    remarkLower.includes("amazon") ||
+    remarkLower.includes("flipkart") ||
+    remarkLower.includes("shopping")
+  ) {
+    return "Shopping"
+  }
+
+  // Entertainment
+  if (
+    remarkLower.includes("bookmyshow") ||
+    remarkLower.includes("movie") ||
+    remarkLower.includes("cinema") ||
+    remarkLower.includes("entertainment")
+  ) {
+    return "Entertainment"
+  }
+
+  // Travel
+  if (
+    remarkLower.includes("uber") ||
+    remarkLower.includes("irctc") ||
+    remarkLower.includes("travel") ||
+    remarkLower.includes("taxi")
+  ) {
+    return "Travel"
+  }
+
+  // Bills & Utilities
+  if (
+    remarkLower.includes("bill") ||
+    remarkLower.includes("electricity") ||
+    remarkLower.includes("water") ||
+    remarkLower.includes("gas") ||
+    remarkLower.includes("utility")
+  ) {
+    return "Bills & Utilities"
+  }
+
+  // Banking & Investments
+  if (
+    remarkLower.includes("zerodha") ||
+    remarkLower.includes("investment") ||
+    remarkLower.includes("trading") ||
+    remarkLower.includes("broking")
+  ) {
+    return "Banking & Investments"
+  }
+
+  // Transfers
+  if (
+    remarkLower.includes("neft") ||
+    remarkLower.includes("imps") ||
+    remarkLower.includes("transfer") ||
+    remarkLower.includes("payment from") ||
+    remarkLower.includes("gift")
+  ) {
+    return "Transfers"
+  }
+
+  // Healthcare
+  if (
+    remarkLower.includes("health") ||
+    remarkLower.includes("hospital") ||
+    remarkLower.includes("pharmacy") ||
+    remarkLower.includes("medical")
+  ) {
+    return "Healthcare"
+  }
+
+  // Other
+  return "Other"
+}
+
 export function ExpenseAnalyser() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const { analysis, loading, error, processFile, reset } = useExpenseAnalyser()
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -55,10 +147,24 @@ export function ExpenseAnalyser() {
 
   const handleReset = () => {
     setSelectedFile(null)
+    setSelectedCategory(null)
     reset()
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
+  }
+
+  // Get transactions for selected category, sorted by withdrawal amount descending
+  const getCategoryTransactions = () => {
+    if (!analysis || !selectedCategory) return []
+    
+    return analysis.transactions
+      .filter((tx) => {
+        if (tx.withdrawalAmount === 0) return false
+        const category = extractCategory(tx.transactionRemarks)
+        return category === selectedCategory
+      })
+      .sort((a, b) => b.withdrawalAmount - a.withdrawalAmount)
   }
 
   return (
@@ -246,9 +352,7 @@ export function ExpenseAnalyser() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ category, percent }) =>
-                            `${category}: ${(percent * 100).toFixed(0)}%`
-                          }
+                          label={false}
                           outerRadius={120}
                           fill="#8884d8"
                           dataKey="totalAmount"
@@ -261,11 +365,15 @@ export function ExpenseAnalyser() {
                           ))}
                         </Pie>
                         <Tooltip
-                          formatter={(value: number) =>
-                            `₹${value.toLocaleString("en-IN", {
-                              maximumFractionDigits: 2,
-                            })}`
-                          }
+                          formatter={(value: number, name: string, props: any) => {
+                            const percent = ((value / analysis.categoryAnalysis.reduce((sum, item) => sum + item.totalAmount, 0)) * 100).toFixed(1)
+                            return [
+                              `₹${value.toLocaleString("en-IN", {
+                                maximumFractionDigits: 2,
+                              })} (${percent}%)`,
+                              props.payload.category
+                            ]
+                          }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -274,7 +382,12 @@ export function ExpenseAnalyser() {
                       {analysis.categoryAnalysis.map((category, index) => (
                         <div
                           key={category.category}
-                          className="flex items-center justify-between p-2 rounded border"
+                          onClick={() => setSelectedCategory(category.category)}
+                          className={`flex items-center justify-between p-2 rounded border cursor-pointer transition-colors ${
+                            selectedCategory === category.category
+                              ? "bg-primary/10 border-primary"
+                              : "hover:bg-accent"
+                          }`}
                         >
                           <div className="flex items-center gap-2">
                             <div
@@ -301,6 +414,67 @@ export function ExpenseAnalyser() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Category Wise Transactions Table */}
+              {selectedCategory && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-5 w-5" />
+                        <CardTitle>Category wise transactions</CardTitle>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedCategory(null)}
+                      >
+                        Close
+                      </Button>
+                    </div>
+                    <CardDescription>
+                      {selectedCategory} - {getCategoryTransactions().length} transactions
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-2 font-semibold">Date</th>
+                            <th className="text-left p-2 font-semibold">Transaction Remarks</th>
+                            <th className="text-right p-2 font-semibold">Amount</th>
+                            <th className="text-right p-2 font-semibold">Balance</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {getCategoryTransactions().map((tx, index) => (
+                            <tr
+                              key={index}
+                              className="border-b hover:bg-accent/50"
+                            >
+                              <td className="p-2 text-sm">
+                                {tx.transactionDate || tx.valueDate}
+                              </td>
+                              <td className="p-2 text-sm">{tx.transactionRemarks}</td>
+                              <td className="p-2 text-sm text-right font-medium">
+                                ₹{tx.withdrawalAmount.toLocaleString("en-IN", {
+                                  maximumFractionDigits: 2,
+                                })}
+                              </td>
+                              <td className="p-2 text-sm text-right text-muted-foreground">
+                                ₹{tx.balance.toLocaleString("en-IN", {
+                                  maximumFractionDigits: 2,
+                                })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </>
           )}
         </CardContent>
