@@ -136,8 +136,8 @@ function extractCategory(remarks: string): string {
   return "Other"
 }
 
-// Parse Excel file and extract transactions
-function parseExcelFile(buffer: Buffer): Transaction[] {
+// Parse ICICI Bank Excel file and extract transactions
+function parseICICIExcelFile(buffer: Buffer): Transaction[] {
   try {
     const workbook = XLSX.read(buffer, { type: "buffer" })
     const sheetName = workbook.SheetNames[0]
@@ -158,7 +158,7 @@ function parseExcelFile(buffer: Buffer): Transaction[] {
       // Header must contain Date AND (Balance OR Withdrawal OR Deposit OR Description/Remarks)
       const hasDate = rowStr.includes("date")
       const hasAmount = rowStr.includes("balance") || rowStr.includes("withdrawal") || rowStr.includes("deposit") || rowStr.includes("debit") || rowStr.includes("credit")
-      const hasDescription = rowStr.includes("remark") || rowStr.includes("description") || rowStr.includes("particulars") || rowStr.includes("narration")
+      const hasDescription = rowStr.includes("remark") || rowStr.includes("description") || rowStr.includes("particulars")
 
       // Special case for our file which might use different headers
       // We found the problematic row was "Transaction Date from ... to ..."
@@ -255,8 +255,168 @@ function parseExcelFile(buffer: Buffer): Transaction[] {
     logger.info({ parsedCount: transactions.length }, "Finished parsing rows")
     return transactions
   } catch (error) {
-    logger.error({ error }, "Failed to parse Excel file")
-    throw new Error(`Failed to parse Excel file: ${error instanceof Error ? error.message : "Unknown error"}`)
+    logger.error({ error }, "Failed to parse ICICI Excel file")
+    throw new Error(`Failed to parse ICICI Excel file: ${error instanceof Error ? error.message : "Unknown error"}`)
+  }
+}
+
+// Parse HDFC Bank Excel file and extract transactions
+function parseHDFCExcelFile(buffer: Buffer): Transaction[] {
+  try {
+    const workbook = XLSX.read(buffer, { type: "buffer" })
+    const sheetName = workbook.SheetNames[0]
+    const worksheet = workbook.Sheets[sheetName]
+
+    // Convert to JSON
+    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][]
+    logger.info({ rowCount: data.length }, "Excel sheet converted to JSON")
+
+    // Find header row - HDFC uses "Narration" column
+    // HDFC files have metadata rows at the top, so we need to search more rows
+    let headerRowIndex = -1
+    for (let i = 0; i < Math.min(50, data.length); i++) {
+      const row = data[i]
+      if (!row || row.length === 0) continue
+
+      // Check if this row contains the header columns
+      const rowLower = row.map((c) => String(c || "").toLowerCase())
+      const rowStr = rowLower.join(" ")
+
+      // Header must contain Date AND Narration AND (Withdrawal OR Deposit)
+      const hasDate = rowLower.some((c) => c.includes("date") && !c.includes("value"))
+      const hasValueDate = rowLower.some((c) => c.includes("value"))
+      const hasNarration = rowLower.some((c) => c.includes("narration"))
+      const hasWithdrawal = rowLower.some((c) => c.includes("withdrawal"))
+      const hasDeposit = rowLower.some((c) => c.includes("deposit"))
+      const hasBalance = rowLower.some((c) => c.includes("balance") || c.includes("closing"))
+
+      // More specific check: header should have Date, Narration, and at least one amount column
+      if (hasDate && hasNarration && (hasWithdrawal || hasDeposit || hasBalance)) {
+        // Verify this looks like a proper header row (should have multiple columns)
+        const nonEmptyColumns = row.filter((c) => c !== null && c !== undefined && String(c).trim() !== "").length
+        if (nonEmptyColumns >= 5) {
+          headerRowIndex = i
+          logger.info({ headerRowIndex, rowPreview: row.slice(0, 7) }, "Found potential header row")
+          break
+        }
+      }
+    }
+
+    if (headerRowIndex === -1) {
+      logger.error({ firstRows: data.slice(0, 30) }, "Could not find header row. Dumping first 30 rows.")
+      throw new Error("Could not find header row in HDFC Excel file")
+    }
+
+    logger.info({ headerRowIndex, headers: data[headerRowIndex] }, "Found header row")
+
+    const headers = data[headerRowIndex]
+    const transactions: Transaction[] = []
+
+    // Find column indices for HDFC format
+    // Date, Narration, Chq./Ref.No., Value Dt, Withdrawal Amt., Deposit Amt., Closing Balance
+    const transactionDateIndex = headers.findIndex((h) => {
+      const hLower = String(h || "").toLowerCase()
+      return hLower.includes("date") && !hLower.includes("value")
+    })
+    const valueDateIndex = headers.findIndex((h) => {
+      const hLower = String(h || "").toLowerCase()
+      return hLower.includes("value")
+    })
+    const narrationIndex = headers.findIndex((h) => {
+      const hLower = String(h || "").toLowerCase()
+      return hLower.includes("narration")
+    })
+    const chequeNumberIndex = headers.findIndex((h) => {
+      const hLower = String(h || "").toLowerCase()
+      return hLower.includes("chq") || hLower.includes("ref") || hLower.includes("cheque")
+    })
+    const withdrawalIndex = headers.findIndex((h) => {
+      const hLower = String(h || "").toLowerCase()
+      return hLower.includes("withdrawal") || hLower.includes("debit")
+    })
+    const depositIndex = headers.findIndex((h) => {
+      const hLower = String(h || "").toLowerCase()
+      return hLower.includes("deposit") || hLower.includes("credit")
+    })
+    const balanceIndex = headers.findIndex((h) => {
+      const hLower = String(h || "").toLowerCase()
+      return hLower.includes("closing") || (hLower.includes("balance") && !hLower.includes("opening"))
+    })
+
+    logger.info(
+      {
+        indices: {
+          valueDateIndex,
+          transactionDateIndex,
+          chequeNumberIndex,
+          narrationIndex,
+          withdrawalIndex,
+          depositIndex,
+          balanceIndex,
+        },
+        headers: headers,
+      },
+      "HDFC column indices found"
+    )
+
+    // Validate that we found critical columns
+    if (narrationIndex === -1) {
+      throw new Error("Could not find 'Narration' column in HDFC Excel file")
+    }
+    if (transactionDateIndex === -1 && valueDateIndex === -1) {
+      throw new Error("Could not find 'Date' column in HDFC Excel file")
+    }
+    if (withdrawalIndex === -1 && depositIndex === -1) {
+      throw new Error("Could not find 'Withdrawal' or 'Deposit' column in HDFC Excel file")
+    }
+
+    // Parse data rows
+    for (let i = headerRowIndex + 1; i < data.length; i++) {
+      const row = data[i]
+      if (!row || row.length === 0) continue
+
+      const valueDate = row[valueDateIndex]
+      const transactionDate = row[transactionDateIndex]
+      const narration = row[narrationIndex]
+
+      // Skip empty rows
+      if (!valueDate && !transactionDate && !narration) continue
+
+      // Skip summary rows (HDFC statements often have summary rows at the end)
+      if (String(narration || "").toLowerCase().includes("statement summary") ||
+          String(narration || "").toLowerCase().includes("opening balance") ||
+          String(narration || "").toLowerCase().includes("closing balance") ||
+          String(narration || "").toLowerCase().includes("total")) {
+        continue
+      }
+
+      const withdrawalAmount =
+        parseFloat(String(row[withdrawalIndex] || 0)) || 0
+      const depositAmount = parseFloat(String(row[depositIndex] || 0)) || 0
+      const balance = parseFloat(String(row[balanceIndex] || 0)) || 0
+
+      // Only include rows with actual transactions (withdrawal or deposit)
+      if (withdrawalAmount === 0 && depositAmount === 0) continue
+
+      transactions.push({
+        valueDate: valueDate ? String(valueDate) : "",
+        transactionDate: transactionDate ? String(transactionDate) : "",
+        chequeNumber:
+          chequeNumberIndex >= 0 && row[chequeNumberIndex]
+            ? String(row[chequeNumberIndex])
+            : null,
+        transactionRemarks: narration ? String(narration) : "",
+        withdrawalAmount,
+        depositAmount,
+        balance,
+      })
+    }
+
+    logger.info({ parsedCount: transactions.length }, "Finished parsing HDFC rows")
+    return transactions
+  } catch (error) {
+    logger.error({ error }, "Failed to parse HDFC Excel file")
+    throw new Error(`Failed to parse HDFC Excel file: ${error instanceof Error ? error.message : "Unknown error"}`)
   }
 }
 
@@ -416,11 +576,18 @@ function analyzeTransactions(transactions: Transaction[]): ExpenseAnalysis {
 }
 
 export const expenseAnalyserService = {
-  processFile: async (fileBuffer: Buffer): Promise<ExpenseAnalysis> => {
+  processFile: async (fileBuffer: Buffer, bankType: string = "icici"): Promise<ExpenseAnalysis> => {
     try {
-      logger.info("Processing expense file")
-      const transactions = parseExcelFile(fileBuffer)
-      logger.info({ transactionCount: transactions.length }, "Parsed transactions")
+      logger.info({ bankType }, "Processing expense file")
+      
+      let transactions: Transaction[]
+      if (bankType === "hdfc") {
+        transactions = parseHDFCExcelFile(fileBuffer)
+      } else {
+        transactions = parseICICIExcelFile(fileBuffer)
+      }
+      
+      logger.info({ transactionCount: transactions.length, bankType }, "Parsed transactions")
 
       if (transactions.length === 0) {
         throw new Error("No transactions found in the file")
@@ -430,7 +597,7 @@ export const expenseAnalyserService = {
       logger.info("Expense analysis completed")
       return analysis
     } catch (error) {
-      logger.error({ err: error }, "Failed to process expense file")
+      logger.error({ err: error, bankType }, "Failed to process expense file")
       throw error
     }
   },

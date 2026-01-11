@@ -7,11 +7,11 @@ export function useExpenseAnalyser() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const processFile = async (file: File) => {
+  const processFile = async (file: File, bankType: string = "icici") => {
     setLoading(true)
     setError(null)
     try {
-      const result = await expenseAnalyserApi.uploadFile(file)
+      const result = await expenseAnalyserApi.uploadFile(file, bankType)
       setAnalysis(result)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to process file"

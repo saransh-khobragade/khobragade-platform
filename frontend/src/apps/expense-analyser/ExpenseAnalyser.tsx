@@ -181,6 +181,7 @@ function extractTags(remarks: string): string[] {
 export function ExpenseAnalyser() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [bankType, setBankType] = useState<string>("icici")
   const { analysis, loading, error, processFile, reset } = useExpenseAnalyser()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
@@ -195,7 +196,7 @@ export function ExpenseAnalyser() {
 
   const handleUpload = async () => {
     if (selectedFile) {
-      await processFile(selectedFile)
+      await processFile(selectedFile, bankType)
     }
   }
 
@@ -293,6 +294,18 @@ export function ExpenseAnalyser() {
         <CardContent className="space-y-4">
           {!analysis && (
             <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Select Bank:</label>
+                <select
+                  value={bankType}
+                  onChange={(e) => setBankType(e.target.value)}
+                  className="w-full p-2 border rounded-md bg-background"
+                  disabled={loading}
+                >
+                  <option value="icici">ICICI Bank</option>
+                  <option value="hdfc">HDFC Bank</option>
+                </select>
+              </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Upload Excel File:</label>
                 <input

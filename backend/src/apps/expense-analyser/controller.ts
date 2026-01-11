@@ -13,7 +13,9 @@ export const expenseAnalyserController = {
       }
 
       const fileBuffer = req.file.buffer
-      const analysis = await expenseAnalyserService.processFile(fileBuffer)
+      const bankType = (req.body.bankType as string) || "icici" // Default to ICICI for backward compatibility
+      
+      const analysis = await expenseAnalyserService.processFile(fileBuffer, bankType)
 
       res.json(analysis)
     } catch (error) {
