@@ -128,7 +128,6 @@ function extractCategory(remarks: string): string {
 function extractTags(remarks: string): string[] {
   const tags: string[] = []
   const remarkLower = remarks.toLowerCase()
-  const remarkUpper = remarks.toUpperCase()
 
   // Payment methods
   if (remarks.includes("UPI")) tags.push("UPI")
@@ -433,10 +432,12 @@ export function ExpenseAnalyser() {
                       />
                       <YAxis />
                       <Tooltip
-                        formatter={(value: number) =>
-                          `₹${value.toLocaleString("en-IN", {
-                            maximumFractionDigits: 2,
-                          })}`
+                        formatter={(value: number | undefined) =>
+                          value !== undefined
+                            ? `₹${value.toLocaleString("en-IN", {
+                                maximumFractionDigits: 2,
+                              })}`
+                            : ""
                         }
                         labelFormatter={(value) => {
                           // Format YYYY-MM-DD to DD/MM/YYYY
@@ -471,7 +472,7 @@ export function ExpenseAnalyser() {
                     <ResponsiveContainer width="100%" height={400}>
                       <PieChart>
                         <Pie
-                          data={analysis.categoryAnalysis}
+                          data={analysis.categoryAnalysis as any}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
@@ -480,7 +481,7 @@ export function ExpenseAnalyser() {
                           fill="#8884d8"
                           dataKey="totalAmount"
                         >
-                          {analysis.categoryAnalysis.map((entry, index) => (
+                          {analysis.categoryAnalysis.map((_, index) => (
                             <Cell
                               key={`cell-${index}`}
                               fill={COLORS[index % COLORS.length]}
@@ -488,7 +489,8 @@ export function ExpenseAnalyser() {
                           ))}
                         </Pie>
                         <Tooltip
-                          formatter={(value: number, name: string, props: any) => {
+                          formatter={(value: number | undefined, _name: string | undefined, props: any) => {
+                            if (value === undefined) return ["", ""]
                             const percent = ((value / analysis.categoryAnalysis.reduce((sum, item) => sum + item.totalAmount, 0)) * 100).toFixed(1)
                             return [
                               `₹${value.toLocaleString("en-IN", {
