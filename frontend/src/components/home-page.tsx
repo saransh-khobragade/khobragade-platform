@@ -13,7 +13,7 @@ export function HomePage() {
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Khobragade Projects</h1>
+        <h1 className="text-4xl font-bold mb-4">Open Platform</h1>
         <p className="text-muted-foreground text-lg">
           Select a project to get started
         </p>
