@@ -1,0 +1,2 @@
+-- This migration was a no-op (transactions table was already removed)
+-- No changes needed

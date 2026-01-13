@@ -1,0 +1,2 @@
+-- This migration was a no-op (transactions model was removed from schema)
+-- No changes needed

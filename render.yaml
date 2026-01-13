@@ -23,7 +23,7 @@ services:
   - key: PORT
     sync: false
   region: oregon
-  buildCommand: bun install && bun run build
+  buildCommand: bun install && bun run build && bun prisma:generate && bunx prisma migrate deploy
   startCommand: bun run start
   autoDeployTrigger: commit
   rootDir: backend
