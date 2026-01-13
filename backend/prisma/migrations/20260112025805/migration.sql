@@ -1,2 +1,25 @@
--- This migration was a no-op (transactions table was already removed)
--- No changes needed
+-- CreateTable
+CREATE TABLE "todos" (
+    "id" TEXT NOT NULL,
+    "text" TEXT NOT NULL,
+    "completed" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "todos_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "notes" (
+    "id" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "title" TEXT,
+    "shareId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "notes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "notes_shareId_key" ON "notes"("shareId");
