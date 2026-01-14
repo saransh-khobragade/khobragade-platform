@@ -2,17 +2,24 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import pinoHttp from "pino-http"
+import { createServer } from "http"
 import prisma from "./db/index.js"
 import todosRouter from "./apps/todo/routes.js"
 import md5Router from "./apps/md5-converter/routes.js"
 import notesRouter from "./apps/notes/routes.js"
 import expenseAnalyserRouter from "./apps/expense-analyser/routes.js"
+import userRouter from "./shared/user/user.routes.js"
+import { initializeSocketIO } from "./shared/realtime/socket.service.js"
 import { logger } from "./lib/logger.js"
 
 dotenv.config()
 
 const app = express()
+const httpServer = createServer(app)
 const PORT = process.env.PORT || 3000
+
+// Initialize Socket.io
+initializeSocketIO(httpServer)
 
 // Middleware
 app.use(cors())
@@ -89,6 +96,14 @@ app.use("/api/notes", notesRouter)
 // Expense Analyser routes
 app.use("/api/expense-analyser", expenseAnalyserRouter)
 
+// Auth/User routes
+app.use("/api/auth", userRouter)
+app.use("/api/users", userRouter)
+
+// Chat routes
+import chatRouter from "./apps/chat/routes.js"
+app.use("/api/chat", chatRouter)
+
 // Graceful shutdown
 process.on("SIGINT", async () => {
   logger.info("Shutting down gracefully")
@@ -103,7 +118,7 @@ process.on("SIGTERM", async () => {
 })
 
 // Start server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   logger.info(`🚀 Server running on http://localhost:${PORT}`)
 })
 

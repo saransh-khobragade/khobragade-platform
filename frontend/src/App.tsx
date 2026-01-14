@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Home } from "lucide-react"
 import { apps } from "@/config/apps.js"
 import { NotesApp } from "@/apps/notes/NotesApp.js"
+import { AuthProvider } from "@/shared/auth/AuthContext"
 
 function Navigation() {
   const location = useLocation()
@@ -31,19 +32,21 @@ function Navigation() {
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto py-8">
-          <Navigation />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            {apps.map((app) => (
-              <Route key={app.id} path={app.path} element={<app.component />} />
-            ))}
-            {/* Notes with shareId */}
-            <Route path="/notes/:shareId" element={<NotesApp />} />
-          </Routes>
+      <AuthProvider>
+        <div className="min-h-screen bg-background">
+          <div className="container mx-auto py-8">
+            <Navigation />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              {apps.map((app) => (
+                <Route key={app.id} path={app.path} element={<app.component />} />
+              ))}
+              {/* Notes with shareId */}
+              <Route path="/notes/:shareId" element={<NotesApp />} />
+            </Routes>
+          </div>
         </div>
-      </div>
+      </AuthProvider>
     </ThemeProvider>
   )
 }
