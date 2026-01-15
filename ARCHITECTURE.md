@@ -50,6 +50,22 @@ frontend/src/
 │       ├── types.ts               # TypeScript types
 │       └── hooks/
 │           └── useExpenseAnalyser.ts # Expense analysis logic
+│   ├── chat/
+│   │   ├── ChatApp.tsx            # Main component
+│   │   ├── api.ts                 # API client
+│   │   ├── types.ts               # TypeScript types
+│   │   └── hooks/
+│   │       └── useChat.ts         # Chat state & Socket.io management
+│   └── blog/
+│       ├── BlogApp.tsx            # Main component
+│       ├── api.ts                 # API client
+│       ├── types.ts               # TypeScript types
+│       ├── components/
+│       │   ├── PostCard.tsx       # Post display component
+│       │   ├── PostEditor.tsx     # Post create/edit dialog
+│       │   └── CommentSection.tsx # Comments component
+│       └── hooks/
+│           └── useBlog.ts         # Blog state management
 ├── components/                    # Shared UI components
 │   ├── ui/                        # Reusable UI components (buttons, cards, etc.)
 │   ├── home-page.tsx              # Home page component
@@ -93,6 +109,34 @@ backend/src/
 │       ├── service.ts             # Business logic (Excel parsing, analysis)
 │       ├── validator.ts           # Input validation
 │       └── types.ts               # TypeScript types & DTOs
+│   ├── chat/
+│   │   ├── routes.ts              # Express routes
+│   │   ├── controller.ts          # HTTP request handling
+│   │   ├── service.ts             # Business logic
+│   │   ├── socket.handlers.ts     # Socket.io event handlers
+│   │   └── types.ts               # TypeScript types & DTOs
+│   └── blog/
+│       ├── routes.ts               # Express routes
+│       ├── controller.ts           # HTTP request handling
+│       ├── service.ts              # Business logic
+│       └── types.ts                # TypeScript types & DTOs
+├── shared/                        # Shared modules across apps
+│   ├── auth/                      # Authentication & authorization
+│   │   ├── auth.middleware.ts     # JWT authentication middleware
+│   │   ├── jwt.service.ts         # JWT token generation/verification
+│   │   └── password.service.ts    # Password hashing
+│   ├── file-upload/                # File upload functionality
+│   │   ├── file.routes.ts         # File upload routes
+│   │   ├── file.controller.ts     # File upload handling
+│   │   ├── file.service.ts         # File metadata management
+│   │   └── multer.config.ts       # Multer configuration
+│   ├── realtime/                  # Real-time features
+│   │   ├── socket.service.ts      # Socket.io server setup
+│   │   └── socket.middleware.ts   # Socket authentication
+│   └── user/                      # User management
+│       ├── user.routes.ts         # User routes
+│       ├── user.controller.ts     # User CRUD operations
+│       └── user.service.ts        # User business logic
 ├── db/
 │   └── index.ts                   # Prisma client instance
 ├── lib/
@@ -140,6 +184,25 @@ The platform currently includes the following applications:
    - Location, time period, and category analysis
    - Backend: `backend/src/apps/expense-analyser/`
    - Frontend: `frontend/src/apps/expense-analyser/`
+
+7. **Chat App** (`/chat`)
+   - Real-time 1-on-1 messaging with Socket.io
+   - Online/offline user status
+   - Conversation management
+   - Read receipts (delivered/read indicators)
+   - Backend: `backend/src/apps/chat/`
+   - Frontend: `frontend/src/apps/chat/`
+   - Requires authentication
+
+8. **Blog App** (`/blog`)
+   - Create, edit, and delete blog posts
+   - Image uploads for posts
+   - Comments on posts
+   - Like/unlike posts
+   - User authentication required
+   - Backend: `backend/src/apps/blog/`
+   - Frontend: `frontend/src/apps/blog/`
+   - Uses shared file upload module
 
 ## Adding a New App
 
@@ -192,7 +255,14 @@ The platform currently includes the following applications:
    app.use("/api/your-app-path", yourAppRouter)
    ```
 
-4. **Database models** (if needed): Update `backend/prisma/schema.prisma`:
+4. **Add authentication** (if needed): Protect routes with `authMiddleware`:
+   ```typescript
+   import { authMiddleware } from "../../shared/auth/auth.middleware.js"
+   
+   router.post("/", authMiddleware, yourController.create)
+   ```
+
+5. **Database models** (if needed): Update `backend/prisma/schema.prisma`:
    ```prisma
    model YourModel {
      id        String   @id @default(uuid())
@@ -207,6 +277,15 @@ The platform currently includes the following applications:
    Then run migrations:
    ```bash
    bun prisma:migrate
+   ```
+
+6. **Add real-time features** (if needed): Use Socket.io via shared realtime module:
+   ```typescript
+   import { getIO } from "../../shared/realtime/socket.service.js"
+   
+   // In your service or controller
+   const io = getIO()
+   io.emit("your-event", data)
    ```
 
 ## Architecture Layers
@@ -326,6 +405,134 @@ model Note {
 }
 ```
 
+### User Model
+```prisma
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sentMessages     Message[] @relation("Sender")
+  receivedMessages Message[] @relation("Receiver")
+  conversations1   Conversation[] @relation("User1")
+  conversations2   Conversation[] @relation("User2")
+  posts            Post[]
+  comments         Comment[]
+  likes            Like[]
+
+  @@map("users")
+}
+```
+
+### Conversation Model
+```prisma
+model Conversation {
+  id        String   @id @default(uuid())
+  userId1   String
+  userId2   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages  Message[]
+  user1     User @relation("User1", fields: [userId1], references: [id], onDelete: Cascade)
+  user2     User @relation("User2", fields: [userId2], references: [id], onDelete: Cascade)
+
+  @@unique([userId1, userId2])
+  @@map("conversations")
+}
+```
+
+### Message Model
+```prisma
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  receiverId     String
+  content        String
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User        @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver       User        @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+```
+
+### File Model
+```prisma
+model File {
+  id          String   @id @default(uuid())
+  filename    String   @unique
+  originalName String
+  mimeType    String
+  size        Int
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+
+  @@map("files")
+}
+```
+
+### Post Model
+```prisma
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  imageUrl  String?
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  likes     Like[]
+
+  @@map("posts")
+}
+```
+
+### Comment Model
+```prisma
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+```
+
+### Like Model
+```prisma
+model Like {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("likes")
+}
+```
+
 ## API Structure
 
 All backend APIs follow RESTful conventions:
@@ -336,9 +543,50 @@ All backend APIs follow RESTful conventions:
 - `PATCH /api/{app-name}/:id` - Update resource
 - `DELETE /api/{app-name}/:id` - Delete resource
 
+### Authentication Endpoints
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user (returns access & refresh tokens)
+- `POST /api/auth/refresh` - Refresh access token
+- `GET /api/users/me` - Get current user (protected)
+
+### File Upload Endpoints
+- `POST /api/files/upload` - Upload file (protected, multipart/form-data)
+- `GET /api/files/:filename` - Serve file (public)
+- `DELETE /api/files/:filename` - Delete file (protected)
+
+### Real-time (Socket.io)
+- WebSocket connection: `ws://localhost:8080`
+- Events: `new_message`, `message_received`, `user_online`, `user_offline`
+
 Special endpoints:
 - `GET /health` - Health check (includes DB connection check)
 - `GET /api/test-db` - Database connection test
+
+## Shared Modules
+
+The platform includes several shared modules that can be used across applications:
+
+### Authentication (`backend/src/shared/auth/`)
+- JWT-based authentication with access and refresh tokens
+- Password hashing with bcrypt
+- Authentication middleware for protecting routes
+- Used by: Chat App, Blog App
+
+### File Upload (`backend/src/shared/file-upload/`)
+- Multer-based file upload handling
+- File metadata storage in database
+- File serving endpoint
+- Used by: Blog App
+
+### Real-time (`backend/src/shared/realtime/`)
+- Socket.io server setup and management
+- Socket authentication middleware
+- Used by: Chat App
+
+### User Management (`backend/src/shared/user/`)
+- User CRUD operations
+- User profile management
+- Used by: All authenticated apps
 
 ## Benefits
 
@@ -354,6 +602,8 @@ Special endpoints:
   - Components handle UI, hooks handle state management
   - Validators ensure data integrity
 - **Developer Experience**: Clear patterns make onboarding and development faster
+- **Authentication**: Centralized auth system reusable across apps
+- **Real-time**: Socket.io integration for live features
 
 ## Technology Choices
 
@@ -405,4 +655,91 @@ Special endpoints:
 - **Consistent naming** - Follow existing patterns
 - **Clear file purposes** - Each file has a single responsibility
 - **Document complex logic** - Add comments where needed
+
+## Authentication & Authorization
+
+The platform uses JWT-based authentication:
+
+- **Access Tokens**: Short-lived tokens for API requests (stored in localStorage)
+- **Refresh Tokens**: Long-lived tokens for refreshing access tokens
+- **Protected Routes**: Use `authMiddleware` to protect backend routes
+- **Frontend**: Use `ProtectedRoute` component or check `useAuth()` hook
+
+### Using Authentication in Your App
+
+**Backend:**
+```typescript
+import { authMiddleware } from "../../shared/auth/auth.middleware.js"
+
+router.post("/", authMiddleware, yourController.create)
+
+// Access user in controller:
+const userId = req.user?.userId
+```
+
+**Frontend:**
+```typescript
+import { useAuth } from "@/shared/auth/AuthContext"
+
+const { user, loading } = useAuth()
+if (!user) {
+  return <LoginForm />
+}
+```
+
+## Real-time Features
+
+The platform uses Socket.io for real-time communication:
+
+- **Server Setup**: Socket.io server initialized in `backend/src/shared/realtime/socket.service.ts`
+- **Authentication**: Socket connections authenticated via JWT tokens
+- **Event Handling**: App-specific handlers in `socket.handlers.ts`
+
+### Using Socket.io in Your App
+
+**Backend:**
+```typescript
+import { getIO } from "../../shared/realtime/socket.service.js"
+
+// Emit events
+const io = getIO()
+io.to(roomId).emit("your-event", data)
+```
+
+**Frontend:**
+```typescript
+import { io } from "socket.io-client"
+
+const socket = io(SOCKET_URL, {
+  auth: { token: getAuthToken() }
+})
+
+socket.on("your-event", (data) => {
+  // Handle event
+})
+```
+
+## File Uploads
+
+The platform includes a shared file upload module:
+
+- **Upload Endpoint**: `POST /api/files/upload` (multipart/form-data)
+- **File Serving**: `GET /api/files/:filename`
+- **Metadata Storage**: Files stored in `File` model in database
+- **File Storage**: Physical files in `backend/uploads/` directory
+
+### Using File Uploads in Your App
+
+**Backend:** Files are automatically handled via Multer middleware
+
+**Frontend:**
+```typescript
+import { blogApi } from "../api" // Example from Blog app
+
+const formData = new FormData()
+formData.append("file", file)
+
+const result = await blogApi.uploadImage(file)
+// Returns: { url: string, filename: string }
+```
 

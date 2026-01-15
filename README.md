@@ -12,6 +12,8 @@ The platform includes the following applications:
 - **JSON Compare** - Compare two JSON objects and visualize differences
 - **Notes Share** - Create and share notes with shareable links
 - **Expense Analyser** - Analyze transaction history from Excel files with spending insights
+- **Chat App** - Real-time messaging with online/offline status, 1-on-1 conversations
+- **Blog App** - Create and share blog posts with images, comments, and likes
 
 ## 🛠️ Tech Stack
 
@@ -21,6 +23,9 @@ The platform includes the following applications:
 - **Database**: PostgreSQL with Prisma ORM
 - **Logging**: Pino
 - **Language**: TypeScript
+- **Real-time**: Socket.io for WebSocket connections
+- **File Upload**: Multer for file handling
+- **Authentication**: JWT (access & refresh tokens)
 
 ### Frontend
 - **Framework**: React 19
@@ -62,8 +67,10 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/render_db?schema=pub
 #### Frontend
 Create `frontend/.env`:
 ```env
-VITE_API_URL=http://localhost:8080/api
+VITE_API_URL=http://localhost:8080
 ```
+
+**Note**: The API URL should be the base URL (without `/api` suffix) as the frontend adds `/api` to endpoints automatically.
 
 ### 3. Start Database
 
@@ -164,6 +171,13 @@ The platform uses PostgreSQL with Prisma ORM. Current models:
 
 - **Todo** - Task management
 - **Note** - Shared notes with unique share IDs
+- **User** - User accounts with authentication
+- **Conversation** - Chat conversations between users
+- **Message** - Chat messages with read receipts
+- **File** - Uploaded file metadata
+- **Post** - Blog posts with images
+- **Comment** - Comments on blog posts
+- **Like** - Likes on blog posts
 
 To interact with the database:
 
