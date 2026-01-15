@@ -742,4 +742,3 @@ formData.append("file", file)
 const result = await blogApi.uploadImage(file)
 // Returns: { url: string, filename: string }
 ```
-

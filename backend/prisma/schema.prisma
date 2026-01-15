@@ -49,6 +49,9 @@ model User {
   posts            Post[]
   comments         Comment[]
   likes            Like[]
+  instagramPosts   InstagramPost[]
+  instagramComments InstagramComment[]
+  instagramLikes   InstagramLike[]
 
   @@map("users")
 }
@@ -136,4 +139,45 @@ model Like {
 
   @@unique([postId, userId])
   @@map("likes")
+}
+
+model InstagramPost {
+  id        String   @id @default(uuid())
+  imageUrl  String   // Required for Instagram
+  caption   String?
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  InstagramComment[]
+  likes     InstagramLike[]
+
+  @@map("instagram_posts")
+}
+
+model InstagramComment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  post      InstagramPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("instagram_comments")
+}
+
+model InstagramLike {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post      InstagramPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("instagram_likes")
 }

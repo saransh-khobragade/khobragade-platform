@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react"
-import { CheckSquare, Hash, FileJson, GitCompare, FileText, TrendingUp, MessageSquare, BookOpen } from "lucide-react"
+import { CheckSquare, Hash, FileJson, GitCompare, FileText, TrendingUp, MessageSquare, BookOpen, Camera } from "lucide-react"
 import { TodoApp } from "@/apps/todo/TodoApp.js"
 import { MD5Converter } from "@/apps/md5-converter/MD5Converter.js"
 import { JsonFormatter } from "@/apps/json-formatter/JsonFormatter.js"
@@ -8,6 +8,7 @@ import { NotesApp } from "@/apps/notes/NotesApp.js"
 import { ExpenseAnalyser } from "@/apps/expense-analyser/ExpenseAnalyser.js"
 import { ChatApp } from "@/apps/chat/ChatApp.js"
 import { BlogApp } from "@/apps/blog/BlogApp.js"
+import { InstagramApp } from "@/apps/instagram/InstagramApp.js"
 import type { ComponentType } from "react"
 
 export interface AppConfig {
@@ -83,6 +84,14 @@ export const apps: AppConfig[] = [
     icon: BookOpen,
     path: "/blog",
     component: BlogApp,
+  },
+  {
+    id: "instagram",
+    title: "Instagram",
+    description: "Share photos with captions, likes, and comments",
+    icon: Camera,
+    path: "/instagram",
+    component: InstagramApp,
   },
 ]
 

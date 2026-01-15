@@ -92,7 +92,7 @@ export function PostEditor({ post, open, onOpenChange, onSuccess, onCreatePost, 
         const input: UpdatePostInput = {
           title: title.trim(),
           content: content.trim(),
-          ...(imageUrl && imageUrl.trim() !== "" ? { imageUrl: imageUrl.trim() } : { imageUrl: null }),
+          ...(imageUrl && imageUrl.trim() !== "" ? { imageUrl: imageUrl.trim() } : imageUrl === "" ? { imageUrl: undefined } : {}),
         }
         if (onUpdatePost) {
           await onUpdatePost(post.id, input)

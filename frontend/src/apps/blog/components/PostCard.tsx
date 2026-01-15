@@ -9,7 +9,7 @@ import { CommentSection } from "./CommentSection"
 
 interface PostCardProps {
   post: Post
-  onLike: (postId: string) => Promise<void>
+  onLike: (postId: string) => Promise<{ liked: boolean } | void>
   onDelete: (postId: string) => Promise<void>
   onEdit: (post: Post) => void
   onComment: (postId: string, content: string) => Promise<void>

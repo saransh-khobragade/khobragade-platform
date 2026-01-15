@@ -1,43 +1,35 @@
 import { useState } from "react"
-import { useBlog } from "./hooks/useBlog"
+import { useInstagram } from "./hooks/useInstagram"
 import { useAuth } from "@/shared/auth/AuthContext"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Plus } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Loader2, Plus, Camera } from "lucide-react"
 import { LoginForm } from "@/components/LoginForm"
 import { PostCard } from "./components/PostCard"
-import { PostEditor } from "./components/PostEditor"
-import type { Post } from "./types"
+import { UploadModal } from "./components/UploadModal"
 
-export function BlogApp() {
+export function InstagramApp() {
   const { user, loading: authLoading } = useAuth()
   const {
     posts,
     loading,
     error,
+    fetchPosts,
     createPost,
-    updatePost,
     deletePost,
     addComment,
     deleteComment,
     toggleLike,
-  } = useBlog()
+  } = useInstagram()
 
-  const [editorOpen, setEditorOpen] = useState(false)
-  const [editingPost, setEditingPost] = useState<Post | null>(null)
+  const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
   const handleCreatePost = () => {
-    setEditingPost(null)
-    setEditorOpen(true)
+    setUploadModalOpen(true)
   }
 
-  const handleEditPost = (post: Post) => {
-    setEditingPost(post)
-    setEditorOpen(true)
-  }
-
-  const handleEditorSuccess = () => {
-    // Posts will be refreshed automatically via the hook
+  const handleUploadSuccess = () => {
+    fetchPosts()
   }
 
   const handleComment = async (postId: string, content: string) => {
@@ -56,13 +48,14 @@ export function BlogApp() {
     return (
       <div className="w-full max-w-md mx-auto p-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Login Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              Please login to use the Blog app
-            </p>
+          <CardContent className="p-6">
+            <div className="text-center mb-4">
+              <Camera className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+              <h2 className="text-xl font-bold mb-2">Login Required</h2>
+              <p className="text-muted-foreground">
+                Please login to use Instagram
+              </p>
+            </div>
             <LoginForm />
           </CardContent>
         </Card>
@@ -74,8 +67,8 @@ export function BlogApp() {
     <div className="w-full max-w-4xl mx-auto p-4 md:p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Blog</h1>
-          <p className="text-muted-foreground">Share your thoughts and ideas</p>
+          <h1 className="text-3xl font-bold mb-2">Instagram</h1>
+          <p className="text-muted-foreground">Share your photos</p>
         </div>
         <Button onClick={handleCreatePost}>
           <Plus className="h-4 w-4 mr-2" />
@@ -96,6 +89,7 @@ export function BlogApp() {
       ) : posts.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
+            <Camera className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground mb-4">No posts yet</p>
             <Button onClick={handleCreatePost}>
               <Plus className="h-4 w-4 mr-2" />
@@ -104,7 +98,7 @@ export function BlogApp() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {posts.map((post) => (
             <PostCard
               key={post.id}
@@ -113,7 +107,7 @@ export function BlogApp() {
                 await toggleLike(postId)
               }}
               onDelete={deletePost}
-              onEdit={handleEditPost}
+              onEdit={() => {}} // TODO: Implement edit functionality
               onComment={handleComment}
               onDeleteComment={deleteComment}
             />
@@ -121,13 +115,13 @@ export function BlogApp() {
         </div>
       )}
 
-      <PostEditor
-        post={editingPost}
-        open={editorOpen}
-        onOpenChange={setEditorOpen}
-        onSuccess={handleEditorSuccess}
-        onCreatePost={createPost}
-        onUpdatePost={updatePost}
+      <UploadModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
+        onSuccess={handleUploadSuccess}
+        onCreatePost={async (input) => {
+          await createPost(input)
+        }}
       />
     </div>
   )
