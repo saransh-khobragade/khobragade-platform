@@ -5,7 +5,7 @@ import { getAuthToken } from "@/lib/api/client"
 import { useAuth } from "@/shared/auth/AuthContext"
 import type { Conversation, Message } from "../types"
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
+const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
 
 export const useChat = () => {
   const { user } = useAuth()

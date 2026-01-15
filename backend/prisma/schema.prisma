@@ -46,6 +46,9 @@ model User {
   receivedMessages Message[] @relation("Receiver")
   conversations1   Conversation[] @relation("User1")
   conversations2   Conversation[] @relation("User2")
+  posts            Post[]
+  comments         Comment[]
+  likes            Like[]
 
   @@map("users")
 }
@@ -79,4 +82,58 @@ model Message {
   receiver       User        @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@map("messages")
+}
+
+model File {
+  id          String   @id @default(uuid())
+  filename    String   @unique
+  originalName String
+  mimeType    String
+  size        Int
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+
+  @@map("files")
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  imageUrl  String?
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  likes     Like[]
+
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("likes")
 }

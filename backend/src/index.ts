@@ -23,7 +23,35 @@ initializeSocketIO(httpServer)
 
 // Middleware
 app.use(cors())
-app.use(express.json())
+app.use(express.json({
+  strict: false, // Allow non-objects (strings, arrays, etc.)
+  verify: (req: any, res, buf) => {
+    // Log raw body for debugging JSON parsing errors
+    try {
+      const rawBody = buf.toString('utf8')
+      if (rawBody && req.method === 'POST') {
+        req.rawBody = rawBody
+        logger.info({ rawBody, url: req.url }, "Raw request body received")
+      }
+    } catch (e) {
+      // Ignore errors in logging
+    }
+  }
+}))
+
+// Error handler for JSON parsing errors
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    logger.error({ 
+      error: err.message, 
+      rawBody: (req as any).rawBody,
+      url: req.url,
+      method: req.method
+    }, "JSON parsing error")
+    return res.status(400).json({ error: "Invalid JSON in request body", details: err.message })
+  }
+  next(err)
+})
 
 // Request logging middleware
 app.use(
@@ -103,6 +131,14 @@ app.use("/api/users", userRouter)
 // Chat routes
 import chatRouter from "./apps/chat/routes.js"
 app.use("/api/chat", chatRouter)
+
+// File upload routes
+import fileRouter from "./shared/file-upload/file.routes.js"
+app.use("/api/files", fileRouter)
+
+// Blog routes
+import blogRouter from "./apps/blog/routes.js"
+app.use("/api/blog", blogRouter)
 
 // Graceful shutdown
 process.on("SIGINT", async () => {
