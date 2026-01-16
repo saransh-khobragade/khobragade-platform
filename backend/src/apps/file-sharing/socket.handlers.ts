@@ -101,6 +101,11 @@ export const setupFileSharingSocketHandlers = (socket: Socket): void => {
     try {
       const { shareToken, sdp } = data
 
+      // Ignore if this is a video chat event (has roomId instead of shareToken)
+      if (!shareToken || (data as any).roomId) {
+        return // This is a video chat event, not file sharing
+      }
+
       // Verify share exists
       const share = await fileSharingService.getShareByToken(shareToken)
       if (!share) {
@@ -131,6 +136,11 @@ export const setupFileSharingSocketHandlers = (socket: Socket): void => {
     try {
       const { shareToken, sdp } = data
 
+      // Ignore if this is a video chat event (has roomId instead of shareToken)
+      if (!shareToken || (data as any).roomId) {
+        return // This is a video chat event, not file sharing
+      }
+
       // Verify share exists
       const share = await fileSharingService.getShareByToken(shareToken)
       if (!share) {
@@ -153,6 +163,11 @@ export const setupFileSharingSocketHandlers = (socket: Socket): void => {
   socket.on("ice_candidate", async (data: ICECandidate) => {
     try {
       const { shareToken, candidate, sdpMLineIndex, sdpMid } = data
+
+      // Ignore if this is a video chat event (has roomId instead of shareToken)
+      if (!shareToken || (data as any).roomId) {
+        return // This is a video chat event, not file sharing
+      }
 
       // Verify share exists
       const share = await fileSharingService.getShareByToken(shareToken)
