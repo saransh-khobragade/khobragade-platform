@@ -1,21 +1,21 @@
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
 
 const getAuthToken = (): string | null => {
-  return localStorage.getItem("accessToken")
+  return sessionStorage.getItem("accessToken")
 }
 
 const getRefreshToken = (): string | null => {
-  return localStorage.getItem("refreshToken")
+  return sessionStorage.getItem("refreshToken")
 }
 
 const setAuthTokens = (accessToken: string, refreshToken: string): void => {
-  localStorage.setItem("accessToken", accessToken)
-  localStorage.setItem("refreshToken", refreshToken)
+  sessionStorage.setItem("accessToken", accessToken)
+  sessionStorage.setItem("refreshToken", refreshToken)
 }
 
 const clearAuthTokens = (): void => {
-  localStorage.removeItem("accessToken")
-  localStorage.removeItem("refreshToken")
+  sessionStorage.removeItem("accessToken")
+  sessionStorage.removeItem("refreshToken")
 }
 
 /**

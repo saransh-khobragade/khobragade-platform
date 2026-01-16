@@ -17,8 +17,8 @@ todos: []
 - [x] **Phase 2: Chat App** - ✅ Completed
 - [x] **Phase 3: Blog App** - ✅ Completed
 - [x] **Phase 4: Instagram-like App** - ✅ Completed
-- [x] **Phase 5: File Sharing App** - ✅ Completed
-- [ ] **Phase 6: Video Chat App** - Not Started
+- [x] **Phase 5: File Sharing App** - 🚀 Deployed
+- [x] **Phase 6: Video Chat App** - 🟡 In Progress
 - [ ] **Phase 7: Enhanced Shared Modules** - Not Started
 - [ ] **Phase 8: Additional Apps** - Not Started
 
@@ -655,7 +655,7 @@ model User {
 
 ## Phase 5: File Sharing App MVP (WebRTC P2P)
 
-**Status**: ✅ Completed | **Deployment**: ⬜ Not Deployed
+**Status**: ✅ Completed | **Deployment**: 🚀 Deployed
 
 ### Features
 
@@ -669,19 +669,25 @@ model User {
 
 ### Deployment Checklist
 
-- [ ] Backend deployed and tested
-- [ ] Frontend deployed and tested
-- [ ] Database migrations applied
-- [ ] WebRTC P2P transfer verified
-- [ ] TURN server configured (if needed)
-- [ ] File transfer tested with different file sizes
-- [ ] Connection error handling tested
-- [ ] End-to-end testing completed
-- [ ] Production URL: `_________________`
+- [x] Backend deployed and tested
+- [x] Frontend deployed and tested
+- [x] Database migrations applied
+- [x] WebRTC P2P transfer verified
+- [x] TURN server configured (if needed) - Using Google STUN servers (works for most cases)
+- [x] File transfer tested with different file sizes
+- [x] Connection error handling tested
+- [x] End-to-end testing completed
+- [x] Production URL: `[Deployed and tested remotely]`
 
 ### Notes & Learnings
 
-_Add notes here after deployment..._
+- WebRTC Data Channels work well for P2P file transfer without server storage
+- Socket.io signaling is reliable for WebRTC connection setup
+- Google STUN servers sufficient for most local network scenarios
+- 64KB chunking works efficiently for large files
+- Public share links work without authentication (receiver doesn't need to log in)
+- HashRouter requires `#` in URLs for client-side routing
+- Enhanced logging crucial for debugging WebRTC connection issues
 
 ### Architecture
 
@@ -754,15 +760,15 @@ model FileShare {
 
 ## Phase 6: Video Chat App MVP
 
-**Status**: ⬜ Not Started | **Deployment**: ⬜ Not Deployed
+**Status**: 🟡 In Progress | **Deployment**: ⬜ Not Deployed
 
 ### Features
 
-- [ ] Create/join rooms
-- [ ] Video/audio streaming (WebRTC)
+- [x] Create/join rooms
+- [x] Video/audio streaming (WebRTC)
 - [ ] Screen sharing (optional)
-- [ ] Room management
-- [ ] Real-time signaling via Socket.io
+- [x] Room management
+- [x] Real-time signaling via Socket.io
 
 ### Deployment Checklist
 
@@ -782,17 +788,20 @@ _Add notes here after deployment..._
 
 ### Backend (`backend/src/apps/video-chat/`)
 
-- Uses shared auth + real-time + WebRTC signaling modules
-- **Routes** - Create room, join room, get room info
-- **Socket Handlers** - WebRTC signaling (offer/answer/ICE) for media streams
+- ✅ Uses shared auth + real-time + WebRTC signaling modules
+- ✅ **routes.ts** - Create room, join room, get room info, deactivate room
+- ✅ **controller.ts** - HTTP request handling
+- ✅ **service.ts** - Room management business logic
+- ✅ **socket.handlers.ts** - WebRTC signaling (offer/answer/ICE) for media streams
+- ✅ **types.ts** - TypeScript types and DTOs
 
 ### Frontend (`frontend/src/apps/video-chat/`)
 
-- **VideoChatApp.tsx** - Main component
-- **Room.tsx** - Video room component
-- **VideoStream.tsx** - Individual video stream
-- **useWebRTC.ts** - WebRTC logic hook
-- **video-chat.api.ts** - API calls
+- ✅ **VideoChatApp.tsx** - Main component with room creation/joining
+- ✅ **components/VideoRoom.tsx** - Video room component with WebRTC streams
+- ✅ **hooks/useWebRTC.ts** - WebRTC logic hook for video/audio streaming
+- ✅ **api.ts** - API client functions
+- ✅ **types.ts** - TypeScript interfaces
 
 ### Database Schema
 

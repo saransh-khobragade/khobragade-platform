@@ -148,6 +148,10 @@ app.use("/api/instagram", instagramRouter)
 import fileSharingRouter from "./apps/file-sharing/routes.js"
 app.use("/api/file-sharing", fileSharingRouter)
 
+// Video Chat routes
+import { videoChatRouter } from "./apps/video-chat/routes.js"
+app.use("/api/video-chat", videoChatRouter)
+
 // Graceful shutdown
 process.on("SIGINT", async () => {
   logger.info("Shutting down gracefully")

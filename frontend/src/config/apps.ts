@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react"
-import { CheckSquare, Hash, FileJson, GitCompare, FileText, TrendingUp, MessageSquare, BookOpen, Camera, Share2 } from "lucide-react"
+import { CheckSquare, Hash, FileJson, GitCompare, FileText, TrendingUp, MessageSquare, BookOpen, Camera, Share2, Video } from "lucide-react"
 import { TodoApp } from "@/apps/todo/TodoApp.js"
 import { MD5Converter } from "@/apps/md5-converter/MD5Converter.js"
 import { JsonFormatter } from "@/apps/json-formatter/JsonFormatter.js"
@@ -10,6 +10,7 @@ import { ChatApp } from "@/apps/chat/ChatApp.js"
 import { BlogApp } from "@/apps/blog/BlogApp.js"
 import { InstagramApp } from "@/apps/instagram/InstagramApp.js"
 import { FileSharingApp } from "@/apps/file-sharing/FileSharingApp.js"
+import { VideoChatApp } from "@/apps/video-chat/VideoChatApp.js"
 import type { ComponentType } from "react"
 
 export interface AppConfig {
@@ -101,6 +102,14 @@ export const apps: AppConfig[] = [
     icon: Share2,
     path: "/file-sharing",
     component: FileSharingApp,
+  },
+  {
+    id: "video-chat",
+    title: "Video Chat",
+    description: "Connect with others via video and audio",
+    icon: Video,
+    path: "/video-chat",
+    component: VideoChatApp,
   },
 ]
 
