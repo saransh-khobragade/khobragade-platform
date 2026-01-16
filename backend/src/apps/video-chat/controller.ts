@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
-import { videoChatService } from "./service"
-import { logger } from "../../lib/logger"
+import { videoChatService } from "./service.js"
+import { logger } from "../../lib/logger.js"
 
 export const videoChatController = {
   async createRoom(req: Request, res: Response) {

@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { videoChatController } from "./controller"
-import { authMiddleware } from "../../shared/auth/auth.middleware"
+import { videoChatController } from "./controller.js"
+import { authMiddleware } from "../../shared/auth/auth.middleware.js"
 
 const router = Router()
 
