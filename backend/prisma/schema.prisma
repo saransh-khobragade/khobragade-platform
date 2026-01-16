@@ -54,6 +54,7 @@ model User {
   instagramLikes   InstagramLike[]
   fileShares       FileShare[]
   rooms            Room[]
+  screenShares     ScreenShare[]
 
   @@map("users")
 }
@@ -210,4 +211,17 @@ model Room {
   host      User     @relation(fields: [hostId], references: [id], onDelete: Cascade)
 
   @@map("rooms")
+}
+
+model ScreenShare {
+  id          String   @id @default(uuid())
+  shareToken  String   @unique
+  sharedBy    String
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  sharer      User     @relation(fields: [sharedBy], references: [id], onDelete: Cascade)
+
+  @@map("screen_shares")
 }

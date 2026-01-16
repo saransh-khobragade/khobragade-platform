@@ -152,6 +152,10 @@ app.use("/api/file-sharing", fileSharingRouter)
 import { videoChatRouter } from "./apps/video-chat/routes.js"
 app.use("/api/video-chat", videoChatRouter)
 
+// Screen Sharing routes
+import { screenSharingRouter } from "./apps/screen-sharing/routes.js"
+app.use("/api/screen-sharing", screenSharingRouter)
+
 // Graceful shutdown
 process.on("SIGINT", async () => {
   logger.info("Shutting down gracefully")

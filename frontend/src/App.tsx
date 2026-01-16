@@ -16,6 +16,7 @@ import { Home, LogOut } from "lucide-react"
 import { apps } from "@/config/apps.js"
 import { NotesApp } from "@/apps/notes/NotesApp.js"
 import { FileSharingReceive } from "@/apps/file-sharing/FileSharingReceive.js"
+import { ScreenShareViewer } from "@/apps/screen-sharing/ScreenShareViewer.js"
 import { AuthProvider, useAuth } from "@/shared/auth/AuthContext"
 
 function Navigation() {
@@ -87,6 +88,8 @@ function App() {
               <Route path="/" element={<HomePage />} />
               {/* File Sharing receive route - must come before /file-sharing */}
               <Route path="/file-sharing/receive/:token" element={<FileSharingReceive />} />
+              {/* Screen Sharing viewer route - must come before /screen-sharing */}
+              <Route path="/screen-sharing/view/:token" element={<ScreenShareViewer />} />
               {apps.map((app) => (
                 <Route key={app.id} path={app.path} element={<app.component />} />
               ))}

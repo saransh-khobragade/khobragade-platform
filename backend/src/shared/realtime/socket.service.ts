@@ -57,6 +57,10 @@ export const initializeSocketIO = (httpServer: HTTPServer): SocketIOServer => {
     const { setupVideoChatSocketHandlers } = await import("../../apps/video-chat/socket.handlers.js")
     setupVideoChatSocketHandlers(socket)
 
+    // Setup screen sharing handlers
+    const { setupScreenSharingSocketHandlers } = await import("../../apps/screen-sharing/socket.handlers.js")
+    setupScreenSharingSocketHandlers(socket)
+
     socket.on("disconnect", () => {
       logger.info({ userId: user?.userId }, "User disconnected from socket")
 

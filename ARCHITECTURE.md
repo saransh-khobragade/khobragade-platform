@@ -846,9 +846,7 @@ The platform uses Socket.io for real-time communication:
 - **Authentication**: Socket connections authenticated via JWT tokens
 - **Event Handling**: App-specific handlers in `socket.handlers.ts`
 
-### Using Socket.io in Your App
-
-**Backend:**
+### Using Socket.io in Your App**Backend:**
 ```typescript
 import { getIO } from "../../shared/realtime/socket.service.js"
 
