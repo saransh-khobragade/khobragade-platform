@@ -52,6 +52,7 @@ model User {
   instagramPosts   InstagramPost[]
   instagramComments InstagramComment[]
   instagramLikes   InstagramLike[]
+  fileShares       FileShare[]
 
   @@map("users")
 }
@@ -180,4 +181,20 @@ model InstagramLike {
 
   @@unique([postId, userId])
   @@map("instagram_likes")
+}
+
+model FileShare {
+  id          String   @id @default(uuid())
+  shareToken  String   @unique
+  fileName    String
+  fileSize    Int
+  mimeType    String
+  sharedBy    String
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  sharer      User     @relation(fields: [sharedBy], references: [id], onDelete: Cascade)
+
+  @@map("file_shares")
 }

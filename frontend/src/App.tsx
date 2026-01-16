@@ -15,6 +15,7 @@ import {
 import { Home, LogOut } from "lucide-react"
 import { apps } from "@/config/apps.js"
 import { NotesApp } from "@/apps/notes/NotesApp.js"
+import { FileSharingReceive } from "@/apps/file-sharing/FileSharingReceive.js"
 import { AuthProvider, useAuth } from "@/shared/auth/AuthContext"
 
 function Navigation() {
@@ -84,6 +85,8 @@ function App() {
             <Navigation />
             <Routes>
               <Route path="/" element={<HomePage />} />
+              {/* File Sharing receive route - must come before /file-sharing */}
+              <Route path="/file-sharing/receive/:token" element={<FileSharingReceive />} />
               {apps.map((app) => (
                 <Route key={app.id} path={app.path} element={<app.component />} />
               ))}

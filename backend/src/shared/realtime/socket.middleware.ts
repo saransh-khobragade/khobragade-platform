@@ -5,6 +5,7 @@ import { logger } from "../../lib/logger.js"
 
 /**
  * Authenticate socket connections using JWT
+ * Allows unauthenticated connections (for file sharing receivers)
  */
 export const socketAuthMiddleware = async (
   socket: Socket<{}, {}, {}, SocketData>,
@@ -14,7 +15,11 @@ export const socketAuthMiddleware = async (
     const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace("Bearer ", "")
 
     if (!token) {
-      return next(new Error("Authentication error: No token provided"))
+      // Allow unauthenticated connections (for file sharing receivers)
+      // They will be validated in the specific handler
+      logger.info("Socket connected without authentication (may be file sharing receiver)")
+      socket.data.user = undefined
+      return next()
     }
 
     const payload = jwtService.verifyAccessToken(token)
@@ -30,6 +35,8 @@ export const socketAuthMiddleware = async (
     next()
   } catch (error) {
     logger.error({ error }, "Socket authentication failed")
-    next(new Error("Authentication error: Invalid token"))
+    // Allow connection but mark as unauthenticated
+    socket.data.user = undefined
+    next()
   }
 }

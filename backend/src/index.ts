@@ -144,6 +144,10 @@ app.use("/api/blog", blogRouter)
 import instagramRouter from "./apps/instagram/routes.js"
 app.use("/api/instagram", instagramRouter)
 
+// File Sharing routes
+import fileSharingRouter from "./apps/file-sharing/routes.js"
+app.use("/api/file-sharing", fileSharingRouter)
+
 // Graceful shutdown
 process.on("SIGINT", async () => {
   logger.info("Shutting down gracefully")

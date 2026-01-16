@@ -66,6 +66,27 @@ frontend/src/
 │       │   └── CommentSection.tsx # Comments component
 │       └── hooks/
 │           └── useBlog.ts         # Blog state management
+│   ├── instagram/
+│       ├── InstagramApp.tsx      # Main component
+│       ├── api.ts                 # API client
+│       ├── types.ts               # TypeScript types
+│       ├── components/
+│       │   ├── PostCard.tsx       # Instagram-style post card
+│       │   ├── UploadModal.tsx    # Photo upload modal
+│       │   └── Profile.tsx         # User profile with posts grid
+│       └── hooks/
+│           └── useInstagram.ts    # Instagram state management
+│   └── file-sharing/
+│       ├── FileSharingApp.tsx    # Main component
+│       ├── api.ts                 # API client
+│       ├── types.ts               # TypeScript types
+│       ├── components/
+│       │   ├── ShareCreator.tsx   # Create share link component
+│       │   ├── ShareReceiver.tsx   # Receive file component
+│       │   └── MyShares.tsx        # List user's shares
+│       └── hooks/
+│           ├── useFileShare.ts    # File sharing state management
+│           └── useP2PFileTransfer.ts # WebRTC P2P transfer hook
 ├── components/                    # Shared UI components
 │   ├── ui/                        # Reusable UI components (buttons, cards, etc.)
 │   ├── home-page.tsx              # Home page component
@@ -119,6 +140,17 @@ backend/src/
 │       ├── routes.ts               # Express routes
 │       ├── controller.ts           # HTTP request handling
 │       ├── service.ts              # Business logic
+│       └── types.ts                # TypeScript types & DTOs
+│   └── instagram/
+│       ├── routes.ts               # Express routes
+│       ├── controller.ts           # HTTP request handling
+│       ├── service.ts              # Business logic
+│       └── types.ts                # TypeScript types & DTOs
+│   └── file-sharing/
+│       ├── routes.ts               # Express routes
+│       ├── controller.ts           # HTTP request handling
+│       ├── service.ts              # Business logic
+│       ├── socket.handlers.ts      # WebRTC signaling handlers
 │       └── types.ts                # TypeScript types & DTOs
 ├── shared/                        # Shared modules across apps
 │   ├── auth/                      # Authentication & authorization
@@ -203,6 +235,33 @@ The platform currently includes the following applications:
    - Backend: `backend/src/apps/blog/`
    - Frontend: `frontend/src/apps/blog/`
    - Uses shared file upload module
+
+9. **Instagram App** (`/instagram`)
+   - Photo uploads with captions (images required)
+   - Instagram-style feed layout
+   - Like/unlike posts
+   - Comments on posts
+   - User profiles with posts grid
+   - User authentication required
+   - Backend: `backend/src/apps/instagram/`
+   - Frontend: `frontend/src/apps/instagram/`
+   - Uses shared file upload module
+   - Separate models from Blog app for better separation
+
+10. **File Sharing App** (`/file-sharing`)
+    - Peer-to-peer file transfer using WebRTC Data Channels
+    - Generate shareable links with tokens
+    - Direct file transfer (no server storage)
+    - File metadata stored on server
+    - Real-time transfer progress
+    - Support for any file type
+    - Automatic file chunking (64KB chunks)
+    - User authentication required for sharing
+    - Public receive links (no auth needed)
+    - Backend: `backend/src/apps/file-sharing/`
+    - Frontend: `frontend/src/apps/file-sharing/`
+    - Uses shared auth + real-time modules
+    - WebRTC signaling via Socket.io
 
 ## Adding a New App
 
@@ -425,6 +484,10 @@ model User {
   posts            Post[]
   comments         Comment[]
   likes            Like[]
+  instagramPosts   InstagramPost[]
+  instagramComments InstagramComment[]
+  instagramLikes   InstagramLike[]
+  fileShares       FileShare[]
 
   @@map("users")
 }
@@ -533,6 +596,75 @@ model Like {
 }
 ```
 
+### InstagramPost Model
+```prisma
+model InstagramPost {
+  id        String   @id @default(uuid())
+  imageUrl  String   // Required for Instagram
+  caption   String?
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  InstagramComment[]
+  likes     InstagramLike[]
+
+  @@map("instagram_posts")
+}
+```
+
+### InstagramComment Model
+```prisma
+model InstagramComment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  post      InstagramPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("instagram_comments")
+}
+```
+
+### InstagramLike Model
+```prisma
+model InstagramLike {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post      InstagramPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("instagram_likes")
+}
+```
+
+### FileShare Model
+```prisma
+model FileShare {
+  id          String   @id @default(uuid())
+  shareToken  String   @unique
+  fileName    String
+  fileSize    Int
+  mimeType    String
+  sharedBy    String
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  sharer      User     @relation(fields: [sharedBy], references: [id], onDelete: Cascade)
+
+  @@map("file_shares")
+}
+```
+
 ## API Structure
 
 All backend APIs follow RESTful conventions:
@@ -554,9 +686,28 @@ All backend APIs follow RESTful conventions:
 - `GET /api/files/:filename` - Serve file (public)
 - `DELETE /api/files/:filename` - Delete file (protected)
 
+### Instagram Endpoints
+- `GET /api/instagram/posts` - Get all Instagram posts (feed)
+- `GET /api/instagram/posts/:id` - Get post by ID
+- `GET /api/instagram/users/:userId/posts` - Get posts by user ID
+- `POST /api/instagram/posts` - Create new post (protected, requires image)
+- `PATCH /api/instagram/posts/:id` - Update post caption (protected)
+- `DELETE /api/instagram/posts/:id` - Delete post (protected)
+- `POST /api/instagram/posts/:postId/comments` - Add comment (protected)
+- `DELETE /api/instagram/comments/:id` - Delete comment (protected)
+- `POST /api/instagram/posts/:postId/like` - Toggle like (protected)
+
+### File Sharing Endpoints
+- `POST /api/file-sharing/create-share` - Create share link with metadata (protected)
+- `GET /api/file-sharing/share/:token` - Get share info by token (public)
+- `GET /api/file-sharing/my-shares` - Get current user's shares (protected)
+- `DELETE /api/file-sharing/share/:token` - Delete share (protected)
+- `PATCH /api/file-sharing/share/:token/deactivate` - Deactivate share (protected)
+
 ### Real-time (Socket.io)
 - WebSocket connection: `ws://localhost:8080`
 - Events: `new_message`, `message_received`, `user_online`, `user_offline`
+- Future: Instagram like/comment events (optional enhancement)
 
 Special endpoints:
 - `GET /health` - Health check (includes DB connection check)

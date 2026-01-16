@@ -14,6 +14,8 @@ The platform includes the following applications:
 - **Expense Analyser** - Analyze transaction history from Excel files with spending insights
 - **Chat App** - Real-time messaging with online/offline status, 1-on-1 conversations
 - **Blog App** - Create and share blog posts with images, comments, and likes
+- **Instagram App** - Share photos with captions, likes, and comments (image-focused social feed)
+- **File Sharing App** - Peer-to-peer file transfer using WebRTC (no server storage)
 
 ## 🛠️ Tech Stack
 
@@ -178,6 +180,10 @@ The platform uses PostgreSQL with Prisma ORM. Current models:
 - **Post** - Blog posts with images
 - **Comment** - Comments on blog posts
 - **Like** - Likes on blog posts
+- **InstagramPost** - Instagram posts with required images and captions
+- **InstagramComment** - Comments on Instagram posts
+- **InstagramLike** - Likes on Instagram posts
+- **FileShare** - File share metadata with shareable tokens
 
 To interact with the database:
 
