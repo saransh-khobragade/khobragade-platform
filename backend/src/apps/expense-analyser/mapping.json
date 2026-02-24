@@ -1,0 +1,80 @@
+{
+  "categories": [
+    {
+      "name": "Food & Dining",
+      "keywords": ["restaurant", "food", "subway", "hotel", "cafe", "zomato", "swiggy", "KFC", "californiaburr", "MC DONALDS", "PIZZA", "Popeyes", "COFFEE", "CHAI"]
+    },
+    {
+      "name": "Credit card",
+      "keywords": ["CREDIT CA", "CC BillPay"]
+    },
+    {
+      "name": "Rent",
+      "keywords": ["SANJOLI SARAF", "ADDA"]
+    },
+    {
+      "name": "Shopping",
+      "keywords": ["myntra", "amazon", "flipkart", "shopping"]
+    },
+    {
+      "name": "Entertainment",
+      "keywords": ["bookmyshow", "movie", "cinema", "entertainment", "PVR", "Apple Serv", "CINEPOLIS", "NETFLIX"]
+    },
+    {
+      "name": "Travel",
+      "keywords": ["uber", "ola", "irctc", "travel", "taxi", "Fuel"]
+    },
+    {
+      "name": "Bills & Utilities",
+      "keywords": ["bill", "electricity", "water", "gas", "utility", "HAPPYLAND", "AirtelBroa", "REAL VALUE", "Acko", "Bharti Air"]
+    },
+    {
+      "name": "Banking & Investments",
+      "keywords": ["zerodha", "investment", "trading", "broking", "ach", "IndianClea", "BSE LIMITE"]
+    },
+    {
+      "name": "Transfers",
+      "keywords": ["neft", "imps", "transfer", "payment from", "gift", "rtgs", "upi"]
+    },
+    {
+      "name": "Healthcare",
+      "keywords": ["health", "hospital", "pharmacy", "medical", "BACC HEALT", "clinic", "pharmacy", "APOLLO", "MEDPLUS"]
+    }
+  ],
+  "defaultCategory": "Other",
+  "tags": {
+    "paymentMethods": ["UPI", "NEFT", "IMPS", "RTGS", "ACH"],
+    "upiMerchantRegex": "UPI\\/([^\\/]+)",
+    "upiMerchantCleanupSuffixes": ["ind", "pvt", "ltd", "limited", "inc"],
+    "bankNames": [
+      "AXIS BANK",
+      "HDFC BANK",
+      "ICICI BANK",
+      "SBI",
+      "STATE BANK",
+      "KOTAK",
+      "PNB",
+      "BOI",
+      "CANARA",
+      "UNION BANK",
+      "RBL",
+      "YES BANK",
+      "INDUSIND",
+      "FEDERAL BANK",
+      "IDFC",
+      "BANDHAN BANK"
+    ],
+    "merchantKeywords": [
+      { "keyword": "amazon", "tag": "Amazon" },
+      { "keyword": "flipkart", "tag": "Flipkart" },
+      { "keyword": "myntra", "tag": "Myntra" },
+      { "keyword": "swiggy", "tag": "Swiggy" },
+      { "keyword": "zomato", "tag": "Zomato" },
+      { "keyword": "uber", "tag": "Uber" },
+      { "keyword": "ola", "tag": "Ola" },
+      { "keyword": "irctc", "tag": "IRCTC" },
+      { "keyword": "bookmyshow", "tag": "BookMyShow" },
+      { "keyword": "zerodha", "tag": "Zerodha" }
+    ]
+  }
+}

@@ -7,6 +7,26 @@ import type {
   TimePeriodAnalysis,
   CategoryAnalysis,
 } from "./types.js"
+import mapping from "./mapping.json"
+
+function parseAmountCell(value: unknown): number {
+  if (value === null || value === undefined || value === "") return 0
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0
+
+  const raw = String(value).trim()
+  if (!raw) return 0
+
+  const cleaned = raw.replace(/,/g, "").replace(/[^\d.\-]/g, "")
+  const parsed = Number.parseFloat(cleaned)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function findFirstHeaderIndex(headers: any[], aliases: string[]): number {
+  return headers.findIndex((header) => {
+    const lower = String(header || "").toLowerCase()
+    return aliases.some((alias) => lower.includes(alias))
+  })
+}
 
 // Extract location from transaction remarks
 function extractLocation(remarks: string): string {
@@ -48,92 +68,47 @@ function extractLocation(remarks: string): string {
 // Extract category from transaction remarks
 function extractCategory(remarks: string): string {
   const remarkLower = remarks.toLowerCase()
+  for (const category of mapping.categories) {
+    if (category.keywords.some((keyword) => remarkLower.includes(keyword.toLowerCase()))) {
+      return category.name
+    }
+  }
+  return mapping.defaultCategory
+}
 
-  // Food & Dining
-  if (
-    remarkLower.includes("restaurant") ||
-    remarkLower.includes("food") ||
-    remarkLower.includes("subway") ||
-    remarkLower.includes("hotel") ||
-    remarkLower.includes("cafe")
-  ) {
-    return "Food & Dining"
+function extractTags(remarks: string): string[] {
+  const tags: string[] = []
+  const remarkLower = remarks.toLowerCase()
+
+  for (const method of mapping.tags.paymentMethods) {
+    if (remarks.toUpperCase().includes(method.toUpperCase())) {
+      tags.push(method)
+    }
   }
 
-  // Shopping
-  if (
-    remarkLower.includes("myntra") ||
-    remarkLower.includes("amazon") ||
-    remarkLower.includes("flipkart") ||
-    remarkLower.includes("shopping")
-  ) {
-    return "Shopping"
+  const upiMatch = remarks.match(new RegExp(mapping.tags.upiMerchantRegex, "i"))
+  if (upiMatch && upiMatch[1]) {
+    const merchant = upiMatch[1].trim().split("@")[0]
+    const suffixPattern = mapping.tags.upiMerchantCleanupSuffixes.join("|")
+    const cleanMerchant = merchant.replace(new RegExp(`\\s+(${suffixPattern})$`, "i"), "").trim()
+    if (cleanMerchant && cleanMerchant.length > 2) {
+      tags.push(cleanMerchant)
+    }
   }
 
-  // Entertainment
-  if (
-    remarkLower.includes("bookmyshow") ||
-    remarkLower.includes("movie") ||
-    remarkLower.includes("cinema") ||
-    remarkLower.includes("entertainment")
-  ) {
-    return "Entertainment"
+  for (const bank of mapping.tags.bankNames) {
+    if (remarks.toUpperCase().includes(bank.toUpperCase())) {
+      tags.push(bank)
+    }
   }
 
-  // Travel
-  if (
-    remarkLower.includes("uber") ||
-    remarkLower.includes("irctc") ||
-    remarkLower.includes("travel") ||
-    remarkLower.includes("taxi")
-  ) {
-    return "Travel"
+  for (const merchantRule of mapping.tags.merchantKeywords) {
+    if (remarkLower.includes(merchantRule.keyword.toLowerCase())) {
+      tags.push(merchantRule.tag)
+    }
   }
 
-  // Bills & Utilities
-  if (
-    remarkLower.includes("bill") ||
-    remarkLower.includes("electricity") ||
-    remarkLower.includes("water") ||
-    remarkLower.includes("gas") ||
-    remarkLower.includes("utility")
-  ) {
-    return "Bills & Utilities"
-  }
-
-  // Banking & Investments
-  if (
-    remarkLower.includes("zerodha") ||
-    remarkLower.includes("investment") ||
-    remarkLower.includes("trading") ||
-    remarkLower.includes("broking")
-  ) {
-    return "Banking & Investments"
-  }
-
-  // Transfers
-  if (
-    remarkLower.includes("neft") ||
-    remarkLower.includes("imps") ||
-    remarkLower.includes("transfer") ||
-    remarkLower.includes("payment from") ||
-    remarkLower.includes("gift")
-  ) {
-    return "Transfers"
-  }
-
-  // Healthcare
-  if (
-    remarkLower.includes("health") ||
-    remarkLower.includes("hospital") ||
-    remarkLower.includes("pharmacy") ||
-    remarkLower.includes("medical")
-  ) {
-    return "Healthcare"
-  }
-
-  // Other
-  return "Other"
+  return [...new Set(tags)]
 }
 
 // Parse ICICI Bank Excel file and extract transactions
@@ -193,12 +168,8 @@ function parseICICIExcelFile(buffer: Buffer): Transaction[] {
     const remarksIndex = headers.findIndex((h) =>
       String(h || "").toLowerCase().includes("remark")
     )
-    const withdrawalIndex = headers.findIndex((h) =>
-      String(h || "").toLowerCase().includes("withdrawal")
-    )
-    const depositIndex = headers.findIndex((h) =>
-      String(h || "").toLowerCase().includes("deposit")
-    )
+    const withdrawalIndex = findFirstHeaderIndex(headers, ["withdrawal", "debit", "dr"])
+    const depositIndex = findFirstHeaderIndex(headers, ["deposit", "credit", "cr"])
     const balanceIndex = headers.findIndex((h) =>
       String(h || "").toLowerCase().includes("balance")
     )
@@ -231,9 +202,10 @@ function parseICICIExcelFile(buffer: Buffer): Transaction[] {
       if (!valueDate && !transactionDate && !remarks) continue
 
       const withdrawalAmount =
-        parseFloat(String(row[withdrawalIndex] || 0)) || 0
-      const depositAmount = parseFloat(String(row[depositIndex] || 0)) || 0
-      const balance = parseFloat(String(row[balanceIndex] || 0)) || 0
+        withdrawalIndex >= 0 ? Math.max(0, parseAmountCell(row[withdrawalIndex])) : 0
+      const depositAmount =
+        depositIndex >= 0 ? Math.max(0, parseAmountCell(row[depositIndex])) : 0
+      const balance = balanceIndex >= 0 ? parseAmountCell(row[balanceIndex]) : 0
 
       // Only include rows with actual transactions (withdrawal or deposit)
       if (withdrawalAmount === 0 && depositAmount === 0) continue
@@ -330,14 +302,8 @@ function parseHDFCExcelFile(buffer: Buffer): Transaction[] {
       const hLower = String(h || "").toLowerCase()
       return hLower.includes("chq") || hLower.includes("ref") || hLower.includes("cheque")
     })
-    const withdrawalIndex = headers.findIndex((h) => {
-      const hLower = String(h || "").toLowerCase()
-      return hLower.includes("withdrawal") || hLower.includes("debit")
-    })
-    const depositIndex = headers.findIndex((h) => {
-      const hLower = String(h || "").toLowerCase()
-      return hLower.includes("deposit") || hLower.includes("credit")
-    })
+    const withdrawalIndex = findFirstHeaderIndex(headers, ["withdrawal", "debit", "dr"])
+    const depositIndex = findFirstHeaderIndex(headers, ["deposit", "credit", "cr"])
     const balanceIndex = headers.findIndex((h) => {
       const hLower = String(h || "").toLowerCase()
       return hLower.includes("closing") || (hLower.includes("balance") && !hLower.includes("opening"))
@@ -391,9 +357,10 @@ function parseHDFCExcelFile(buffer: Buffer): Transaction[] {
       }
 
       const withdrawalAmount =
-        parseFloat(String(row[withdrawalIndex] || 0)) || 0
-      const depositAmount = parseFloat(String(row[depositIndex] || 0)) || 0
-      const balance = parseFloat(String(row[balanceIndex] || 0)) || 0
+        withdrawalIndex >= 0 ? Math.max(0, parseAmountCell(row[withdrawalIndex])) : 0
+      const depositAmount =
+        depositIndex >= 0 ? Math.max(0, parseAmountCell(row[depositIndex])) : 0
+      const balance = balanceIndex >= 0 ? parseAmountCell(row[balanceIndex]) : 0
 
       // Only include rows with actual transactions (withdrawal or deposit)
       if (withdrawalAmount === 0 && depositAmount === 0) continue
@@ -422,9 +389,24 @@ function parseHDFCExcelFile(buffer: Buffer): Transaction[] {
 
 // Analyze transactions
 function analyzeTransactions(transactions: Transaction[]): ExpenseAnalysis {
+  const getTransactionType = (
+    tx: Transaction
+  ): "debit" | "credit" | "unknown" => {
+    if (tx.withdrawalAmount > 0) return "debit"
+    if (tx.depositAmount > 0) return "credit"
+    return "unknown"
+  }
+
+  const enrichedTransactions = transactions.map((tx) => ({
+    ...tx,
+    category: extractCategory(tx.transactionRemarks),
+    tags: extractTags(tx.transactionRemarks),
+    transactionType: getTransactionType(tx),
+  }))
+
   // Location analysis
   const locationMap = new Map<string, { count: number; totalAmount: number }>()
-  transactions.forEach((tx) => {
+  enrichedTransactions.forEach((tx) => {
     if (tx.withdrawalAmount > 0) {
       const location = extractLocation(tx.transactionRemarks)
       const existing = locationMap.get(location) || { count: 0, totalAmount: 0 }
@@ -495,7 +477,7 @@ function analyzeTransactions(transactions: Transaction[]): ExpenseAnalysis {
     string,
     { count: number; totalAmount: number; credit: number; debit: number }
   >()
-  transactions.forEach((tx) => {
+  enrichedTransactions.forEach((tx) => {
     if (tx.transactionDate) {
       const period = extractDayPeriod(tx.transactionDate)
       if (period) {
@@ -531,9 +513,9 @@ function analyzeTransactions(transactions: Transaction[]): ExpenseAnalysis {
 
   // Category analysis
   const categoryMap = new Map<string, { count: number; totalAmount: number }>()
-  transactions.forEach((tx) => {
+  enrichedTransactions.forEach((tx) => {
     if (tx.withdrawalAmount > 0) {
-      const category = extractCategory(tx.transactionRemarks)
+      const category = tx.category || mapping.defaultCategory
       const existing = categoryMap.get(category) || {
         count: 0,
         totalAmount: 0,
@@ -554,18 +536,18 @@ function analyzeTransactions(transactions: Transaction[]): ExpenseAnalysis {
     .sort((a, b) => b.totalAmount - a.totalAmount)
 
   // Calculate totals
-  const totalWithdrawals = transactions.reduce(
+  const totalWithdrawals = enrichedTransactions.reduce(
     (sum, tx) => sum + tx.withdrawalAmount,
     0
   )
-  const totalDeposits = transactions.reduce(
+  const totalDeposits = enrichedTransactions.reduce(
     (sum, tx) => sum + tx.depositAmount,
     0
   )
   const netAmount = totalDeposits - totalWithdrawals
 
   return {
-    transactions,
+    transactions: enrichedTransactions,
     locationAnalysis,
     timePeriodAnalysis,
     categoryAnalysis,

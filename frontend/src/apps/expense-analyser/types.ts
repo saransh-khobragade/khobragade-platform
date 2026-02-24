@@ -6,6 +6,9 @@ export interface Transaction {
   withdrawalAmount: number
   depositAmount: number
   balance: number
+  category?: string
+  tags?: string[]
+  transactionType?: "debit" | "credit" | "unknown"
 }
 
 export interface ExpenseAnalysis {

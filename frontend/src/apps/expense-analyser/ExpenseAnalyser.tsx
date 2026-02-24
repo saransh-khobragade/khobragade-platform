@@ -33,150 +33,6 @@ const COLORS = [
   "#87ceeb",
 ]
 
-// Extract category from transaction remarks (same logic as backend)
-function extractCategory(remarks: string): string {
-  const remarkLower = remarks.toLowerCase()
-
-  // Food & Dining
-  if (
-    remarkLower.includes("restaurant") ||
-    remarkLower.includes("food") ||
-    remarkLower.includes("subway") ||
-    remarkLower.includes("hotel") ||
-    remarkLower.includes("cafe")
-  ) {
-    return "Food & Dining"
-  }
-
-  // Shopping
-  if (
-    remarkLower.includes("myntra") ||
-    remarkLower.includes("amazon") ||
-    remarkLower.includes("flipkart") ||
-    remarkLower.includes("shopping")
-  ) {
-    return "Shopping"
-  }
-
-  // Entertainment
-  if (
-    remarkLower.includes("bookmyshow") ||
-    remarkLower.includes("movie") ||
-    remarkLower.includes("cinema") ||
-    remarkLower.includes("entertainment")
-  ) {
-    return "Entertainment"
-  }
-
-  // Travel
-  if (
-    remarkLower.includes("uber") ||
-    remarkLower.includes("irctc") ||
-    remarkLower.includes("travel") ||
-    remarkLower.includes("taxi")
-  ) {
-    return "Travel"
-  }
-
-  // Bills & Utilities
-  if (
-    remarkLower.includes("bill") ||
-    remarkLower.includes("electricity") ||
-    remarkLower.includes("water") ||
-    remarkLower.includes("gas") ||
-    remarkLower.includes("utility")
-  ) {
-    return "Bills & Utilities"
-  }
-
-  // Banking & Investments
-  if (
-    remarkLower.includes("zerodha") ||
-    remarkLower.includes("investment") ||
-    remarkLower.includes("trading") ||
-    remarkLower.includes("broking")
-  ) {
-    return "Banking & Investments"
-  }
-
-  // Transfers
-  if (
-    remarkLower.includes("neft") ||
-    remarkLower.includes("imps") ||
-    remarkLower.includes("transfer") ||
-    remarkLower.includes("payment from") ||
-    remarkLower.includes("gift")
-  ) {
-    return "Transfers"
-  }
-
-  // Healthcare
-  if (
-    remarkLower.includes("health") ||
-    remarkLower.includes("hospital") ||
-    remarkLower.includes("pharmacy") ||
-    remarkLower.includes("medical")
-  ) {
-    return "Healthcare"
-  }
-
-  // Other
-  return "Other"
-}
-
-// Extract tags from transaction remarks
-function extractTags(remarks: string): string[] {
-  const tags: string[] = []
-  const remarkLower = remarks.toLowerCase()
-
-  // Payment methods
-  if (remarks.includes("UPI")) tags.push("UPI")
-  if (remarks.includes("NEFT")) tags.push("NEFT")
-  if (remarks.includes("IMPS")) tags.push("IMPS")
-  if (remarks.includes("RTGS")) tags.push("RTGS")
-  if (remarks.includes("ACH")) tags.push("ACH")
-
-  // Extract merchant names from UPI transactions
-  // Pattern: UPI/MerchantName/...
-  const upiMatch = remarks.match(/UPI\/([^\/]+)/i)
-  if (upiMatch && upiMatch[1]) {
-    const merchant = upiMatch[1].trim()
-    // Clean up common suffixes
-    const cleanMerchant = merchant
-      .replace(/\s+(ind|pvt|ltd|limited|inc)$/i, "")
-      .trim()
-    if (cleanMerchant && cleanMerchant.length > 2) {
-      tags.push(cleanMerchant)
-    }
-  }
-
-  // Extract bank names
-  const bankNames = [
-    "AXIS BANK", "HDFC BANK", "ICICI BANK", "SBI", "STATE BANK",
-    "KOTAK", "PNB", "BOI", "CANARA", "UNION BANK", "RBL", "YES BANK",
-    "INDUSIND", "FEDERAL BANK", "IDFC", "BANDHAN BANK"
-  ]
-  bankNames.forEach(bank => {
-    if (remarks.toUpperCase().includes(bank)) {
-      tags.push(bank)
-    }
-  })
-
-  // Common merchant patterns
-  if (remarkLower.includes("amazon")) tags.push("Amazon")
-  if (remarkLower.includes("flipkart")) tags.push("Flipkart")
-  if (remarkLower.includes("myntra")) tags.push("Myntra")
-  if (remarkLower.includes("swiggy")) tags.push("Swiggy")
-  if (remarkLower.includes("zomato")) tags.push("Zomato")
-  if (remarkLower.includes("uber")) tags.push("Uber")
-  if (remarkLower.includes("ola")) tags.push("Ola")
-  if (remarkLower.includes("irctc")) tags.push("IRCTC")
-  if (remarkLower.includes("bookmyshow")) tags.push("BookMyShow")
-  if (remarkLower.includes("zerodha")) tags.push("Zerodha")
-
-  return [...new Set(tags)] // Remove duplicates
-}
-
 export function ExpenseAnalyser() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -216,8 +72,7 @@ export function ExpenseAnalyser() {
     return analysis.transactions
       .filter((tx) => {
         if (tx.withdrawalAmount === 0) return false
-        const category = extractCategory(tx.transactionRemarks)
-        return category === selectedCategory
+        return tx.category === selectedCategory
       })
       .sort((a, b) => b.withdrawalAmount - a.withdrawalAmount)
   }
@@ -230,14 +85,13 @@ export function ExpenseAnalyser() {
     const transactions = analysis.transactions
       .filter((tx) => {
         if (tx.withdrawalAmount === 0) return false
-        const category = extractCategory(tx.transactionRemarks)
-        return category === selectedCategory
+        return tx.category === selectedCategory
       })
     
     const tagMap = new Map<string, { count: number; totalAmount: number }>()
     
     transactions.forEach((tx) => {
-      const tags = extractTags(tx.transactionRemarks)
+      const tags = tx.tags || []
       tags.forEach((tag) => {
         const existing = tagMap.get(tag) || { count: 0, totalAmount: 0 }
         tagMap.set(tag, {
@@ -262,8 +116,7 @@ export function ExpenseAnalyser() {
     
     if (selectedTag) {
       transactions = transactions.filter((tx) => {
-        const tags = extractTags(tx.transactionRemarks)
-        return tags.includes(selectedTag)
+        return (tx.tags || []).includes(selectedTag)
       })
     }
     
@@ -627,6 +480,7 @@ export function ExpenseAnalyser() {
                           <tr className="border-b">
                             <th className="text-left p-2 font-semibold">Date</th>
                             <th className="text-left p-2 font-semibold">Transaction Remarks</th>
+                            <th className="text-left p-2 font-semibold">Type</th>
                             <th className="text-right p-2 font-semibold">Amount</th>
                           </tr>
                         </thead>
@@ -640,6 +494,13 @@ export function ExpenseAnalyser() {
                                 {tx.transactionDate || tx.valueDate}
                               </td>
                               <td className="p-2 text-sm">{tx.transactionRemarks}</td>
+                              <td className="p-2 text-sm">
+                                {tx.transactionType === "debit"
+                                  ? "Debit"
+                                  : tx.transactionType === "credit"
+                                    ? "Credit"
+                                    : "Unknown"}
+                              </td>
                               <td className="p-2 text-sm text-right font-medium">
                                 ₹{tx.withdrawalAmount.toLocaleString("en-IN", {
                                   maximumFractionDigits: 2,
