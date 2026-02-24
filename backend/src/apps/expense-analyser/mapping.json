@@ -1,44 +1,49 @@
 {
   "categories": [
+
     {
       "name": "Food & Dining",
-      "keywords": ["restaurant", "food", "subway", "hotel", "cafe", "zomato", "swiggy", "KFC", "californiaburr", "MC DONALDS", "PIZZA", "Popeyes", "COFFEE", "CHAI"]
+      "keywords": ["restaurant", "food", "subway", "hotel", "cafe", "zomato", "swiggy", "KFC", "californiaburr", "MC DONALDS", "PIZZA", "Popeyes", "COFFEE", "CHAI", "THE FAITH", "mcdonalds"]
     },
     {
       "name": "Credit card",
-      "keywords": ["CREDIT CA", "CC BillPay"]
+      "keywords": ["CREDIT CA", "CC BillPay", "HDFCWI","AXIS CREATE CARD", "FCPGAXISBANKBSFI"]
     },
     {
       "name": "Rent",
       "keywords": ["SANJOLI SARAF", "ADDA"]
     },
     {
+      "name": "Loan",
+      "keywords": ["LOAN", "SARANSH KH/STATE BANK OF I"]
+    },
+    {
       "name": "Shopping",
-      "keywords": ["myntra", "amazon", "flipkart", "shopping"]
+      "keywords": ["myntra", "amazon", "flipkart", "shopping","MEESHO", "DRESS", "HEADPHONE"]
     },
     {
       "name": "Entertainment",
-      "keywords": ["bookmyshow", "movie", "cinema", "entertainment", "PVR", "Apple Serv", "CINEPOLIS", "NETFLIX"]
+      "keywords": ["bookmyshow", "movie", "cinema", "entertainment", "PVR", "Apple Serv", "CINEPOLIS", "NETFLIX", "District", "spotify", "appleservices"]
     },
     {
       "name": "Travel",
-      "keywords": ["uber", "ola", "irctc", "travel", "taxi", "Fuel"]
+      "keywords": ["uber", "ola", "irctc", "travel", "taxi", "Fuel", "CAB", "PETROL", "PARKING", "INDIGO"]
     },
     {
       "name": "Bills & Utilities",
-      "keywords": ["bill", "electricity", "water", "gas", "utility", "HAPPYLAND", "AirtelBroa", "REAL VALUE", "Acko", "Bharti Air"]
+      "keywords": ["bill", "electricity", "water", "gas", "utility", "HAPPYLAND", "AirtelBroa", "REAL VALUE", "Acko", "Bharti Air", "COOK", "MAID", "GROCERY", "VEGGIE", "PLUMBER", "HAPPY LAND", "AIRTELPAYMENT", "MILKBASKET"]
     },
     {
       "name": "Banking & Investments",
-      "keywords": ["zerodha", "investment", "trading", "broking", "ach", "IndianClea", "BSE LIMITE"]
+      "keywords": ["zerodha", "investment", "trading", "broking", "ach", "IndianClea", "BSE LIMITE","BSEINDIA", "RFX", "NEOKRED"]
     },
     {
       "name": "Transfers",
-      "keywords": ["neft", "imps", "transfer", "payment from", "gift", "rtgs", "upi"]
+      "keywords": ["neft", "imps", "transfer", "payment from", "gift", "rtgs"]
     },
     {
-      "name": "Healthcare",
-      "keywords": ["health", "hospital", "pharmacy", "medical", "BACC HEALT", "clinic", "pharmacy", "APOLLO", "MEDPLUS"]
+      "name": "Medical",
+      "keywords": ["health", "hospital", "pharmacy", "medical", "BACC HEALT", "clinic", "pharmacy", "APOLLO", "MEDPLUS", "MEDICAL", "MEDICINE", "HEALTHCARE"]
     }
   ],
   "defaultCategory": "Other",

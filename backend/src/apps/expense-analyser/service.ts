@@ -341,6 +341,13 @@ function parseHDFCExcelFile(buffer: Buffer): Transaction[] {
       const row = data[i]
       if (!row || row.length === 0) continue
 
+      // HDFC statement summary is a footer section, not transactional data.
+      // Once it starts, stop parsing further rows.
+      const rowText = row.map((cell) => String(cell || "").toLowerCase()).join(" ")
+      if (rowText.includes("statement summary")) {
+        break
+      }
+
       const valueDate = row[valueDateIndex]
       const transactionDate = row[transactionDateIndex]
       const narration = row[narrationIndex]
