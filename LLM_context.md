@@ -51,6 +51,8 @@ bun dev
 - Backend build: `cd backend && bun run build`
 - Frontend build: `cd frontend && bun run build`
 - DB GUI: `cd backend && bun run prisma:studio`
+- Backend integration tests: `cd backend && bun run test:integration`
+- Backend integration tests (watch): `cd backend && bun run test:integration:watch`
 
 ## Active Frontend Apps
 
@@ -83,6 +85,29 @@ Mounted in `backend/src/index.ts`:
 - `/api/file-sharing`
 - `/api/video-chat`
 - `/api/screen-sharing`
+
+## Backend Integration Coverage
+
+Location: `backend/tests/integration`
+
+- `todo.routes.test.ts`
+- `md5.routes.test.ts`
+- `notes.routes.test.ts`
+- `expense-analyser.routes.test.ts`
+- `user.routes.test.ts`
+- `protected-routes-auth.test.ts`
+- `chat.routes.test.ts`
+- `blog.routes.test.ts`
+- `instagram.routes.test.ts`
+- `file-sharing.routes.test.ts`
+- `video-chat.routes.test.ts`
+- `screen-sharing.routes.test.ts`
+
+Testing approach:
+
+- Route-level integration via `supertest`.
+- Prisma and selected services are mocked/stubbed for deterministic behavior.
+- Auth behavior is validated in dedicated tests for protected endpoints.
 
 ## Where To Edit
 
@@ -142,3 +167,4 @@ Before finishing a task:
 2. Confirm route wiring in both frontend (`apps.ts`) and backend (`index.ts`) if routes changed.
 3. Confirm Prisma model/migration if persistence changed.
 4. Update `ARCHITECTURE.md` and this file when architecture/routes/models change.
+5. If backend routes change, update `backend/README.md` route/test sections.

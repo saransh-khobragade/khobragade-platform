@@ -38,6 +38,7 @@ bun dev
 
 Frontend: `http://localhost:5173`  
 Backend: `http://localhost:8080`
+Backend integration tests: `cd backend && bun run test:integration`
 
 ## Apps (High Level)
 
