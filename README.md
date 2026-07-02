@@ -1,26 +1,80 @@
 # Khobragade Platform
 
-Modular full‑stack platform with multiple apps on a shared React frontend and Express backend.
+A modular full-stack platform hosting multiple web applications with React frontend, Express backend, and PostgreSQL database.
 
-## Quick Start
+## 🚀 Features
 
-1. Start Postgres:
+The platform includes the following applications:
+
+- **Todo App** - Full-featured task management with persistence
+- **MD5 Converter** - Convert text strings to MD5 hash
+- **JSON Formatter** - Format and validate JSON with customizable indentation
+- **JSON Compare** - Compare two JSON objects and visualize differences
+- **Notes Share** - Create and share notes with shareable links
+- **Expense Analyser** - Analyze transaction history from Excel files with spending insights
+
+## 🛠️ Tech Stack
+
+### Backend
+- **Runtime**: Bun
+- **Framework**: Express.js
+- **Database**: PostgreSQL with Prisma ORM
+- **Logging**: Pino
+- **Language**: TypeScript
+
+### Frontend
+- **Framework**: React 19
+- **Build Tool**: Vite
+- **Routing**: React Router v7
+- **Styling**: Tailwind CSS v4
+- **UI Components**: Radix UI
+- **Icons**: Lucide React
+- **Charts**: Recharts
+
+### Infrastructure
+- **Local Development**: Docker Compose
+- **Deployment**: Render.com
+
+## 📋 Prerequisites
+
+- [Bun](https://bun.sh/) installed
+- Docker and Docker Compose installed
+- PostgreSQL 16+ (via Docker)
+
+## 🏃 Quick Start
+
+### 1. Clone the Repository
+
 ```bash
-docker compose up -d
+git clone https://github.com/saransh-khobragade/khobragade-platform.git
+cd khobragade-platform
 ```
 
-2. Backend env (`backend/.env`):
+### 2. Environment Variables
+
+#### Backend
+Create `backend/.env`:
 ```env
 PORT=8080
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/render_db?schema=public"
 ```
 
-3. Frontend env (`frontend/.env`):
+#### Frontend
+Create `frontend/.env`:
 ```env
-VITE_API_URL=http://localhost:8080
+VITE_API_URL=http://localhost:8080/api
 ```
 
-4. Run backend:
+### 3. Start Database
+
+```bash
+docker compose up -d
+```
+
+This starts a PostgreSQL container on port `5432`.
+
+### 4. Start Backend
+
 ```bash
 cd backend
 bun install
@@ -29,26 +83,150 @@ bun prisma:migrate
 bun dev
 ```
 
-5. Run frontend:
+Backend runs on: `http://localhost:8080`
+
+### 5. Start Frontend
+
+In a new terminal:
+
 ```bash
 cd frontend
 bun install
 bun dev
 ```
 
-Frontend: `http://localhost:5173`  
-Backend: `http://localhost:8080`
-Backend integration tests: `cd backend && bun run test:integration`
+Frontend runs on: `http://localhost:5173`
 
-## Apps (High Level)
+## 🛑 Stop Services
 
-- Todo, Notes, MD5 Converter
-- JSON Formatter, JSON Compare
-- Expense Analyser
-- Chat, Blog, Instagram
-- File Sharing (WebRTC), Video Chat, Screen Sharing
+```bash
+# Stop database
+docker compose down
 
-## Architecture
+# Stop backend/frontend: Press Ctrl+C in their respective terminals
+```
 
-See `/Users/saransh/Desktop/Github/khobragade-platform/ARCHITECTURE.md` for the full structure and module details.
-For LLM onboarding, see `/Users/saransh/Desktop/Github/khobragade-platform/LLM_context.md`.
+## 📁 Project Structure
+
+```
+khobragade-platform/
+├── backend/              # Express API server
+│   ├── src/
+│   │   ├── apps/        # Individual application modules
+│   │   ├── db/          # Prisma client
+│   │   └── lib/         # Shared utilities
+│   └── prisma/          # Database schema and migrations
+├── frontend/            # React application
+│   └── src/
+│       ├── apps/        # Individual application components
+│       ├── components/  # Shared UI components
+│       └── config/      # App configuration
+├── e2e/                 # Playwright end-to-end tests
+├── playwright.config.ts # E2E runner + web server config
+├── docker-compose.yml   # Local PostgreSQL setup
+└── render.yaml          # Render.com deployment config
+```
+
+## 🏗️ Architecture
+
+This platform follows a **modular, app-based architecture** where each application is self-contained with its own:
+- Backend routes, controllers, services, and validators
+- Frontend components, hooks, and API clients
+- TypeScript types
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation.
+
+## 🔧 Available Scripts
+
+### Backend
+- `bun dev` - Start development server with hot reload
+- `bun build` - Build for production
+- `bun start` - Start production server
+- `bun prisma:generate` - Generate Prisma client
+- `bun prisma:migrate` - Run database migrations
+- `bun prisma:studio` - Open Prisma Studio (database GUI)
+
+### Frontend
+- `bun dev` - Start development server
+- `bun build` - Build for production
+- `bun preview` - Preview production build
+
+### End-to-End (repo root)
+- `bun run test:e2e` - Run the Playwright suite (headless)
+- `bun run test:e2e:ui` - Run in interactive UI mode
+- `bun run test:e2e:headed` - Run with a visible browser
+- `bun run test:e2e:report` - Open the last HTML report
+
+## 🧪 Testing
+
+Two layers of automated tests cover the platform:
+
+### Backend integration tests
+
+Route-level tests run Express through `supertest` with Prisma/services mocked for speed and determinism.
+
+```bash
+cd backend
+bun run test:integration
+```
+
+See the [Backend README](./backend/README.md) for the full suite and strategy.
+
+### Full-stack end-to-end tests
+
+[Playwright](https://playwright.dev/) tests drive the real frontend against the real backend and a local Postgres database, including multi-user scenarios (two-way chat, cross-user blog collaboration, shared notes), auth validation/error paths, and persistence across reloads.
+
+```bash
+docker compose up -d          # Postgres must be running
+bun run test:e2e              # from the repo root
+```
+
+Playwright starts the backend and frontend automatically. See the [E2E README](./e2e/README.md) for the full scenario list, helpers, and fixtures.
+
+## 🌐 Deployment
+
+The platform is configured for deployment on Render.com:
+
+- **Backend**: Node.js web service with PostgreSQL database
+- **Frontend**: Static site
+
+See `render.yaml` for deployment configuration. The platform auto-deploys on commits to the main branch.
+
+## 📝 Database
+
+The platform uses PostgreSQL with Prisma ORM. Current models:
+
+- **Todo** - Task management
+- **Note** - Shared notes with unique share IDs
+
+To interact with the database:
+
+```bash
+# Connect to PostgreSQL container
+docker exec -it render_postgres psql -U postgres -d render_db
+
+# Useful psql commands:
+# \l              - List databases
+# \dt             - List tables
+# \d table_name   - Describe table structure
+```
+
+## 🧪 Health Checks
+
+- Backend health: `GET http://localhost:8080/health`
+- Database connection test: `GET http://localhost:8080/api/test-db`
+
+## 📚 Documentation
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Detailed architecture and development guide
+- [Backend README](./backend/README.md) - Backend-specific documentation
+- [Frontend README](./frontend/README.md) - Frontend-specific documentation
+- [E2E README](./e2e/README.md) - End-to-end (Playwright) test suite
+
+## 🤝 Contributing
+
+To add a new application to the platform, follow the patterns outlined in [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+## 📄 License
+
+This project is private and proprietary.

@@ -9,9 +9,14 @@ Express + TypeScript API with Prisma/Postgres for persisted modules.
 bun install
 ```
 
-2. Create env file:
-```bash
-cp .env.example .env
+2. Create `.env`:
+```env
+PORT=8080
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/render_db?schema=public"
+JWT_SECRET="replace-me-in-production"
+JWT_REFRESH_SECRET="replace-me-in-production"
+FRONTEND_URL="http://localhost:5173"
+API_URL="http://localhost:8080"
 ```
 
 3. Start Postgres from repo root:
@@ -34,18 +39,18 @@ bun dev
 
 - `GET /health`
 - `GET /api/test-db`
-- ` /api/todos`
-- ` /api/md5`
-- ` /api/notes`
-- ` /api/expense-analyser`
-- ` /api/auth`, ` /api/users`
-- ` /api/chat`
-- ` /api/files`
-- ` /api/blog`
-- ` /api/instagram`
-- ` /api/file-sharing`
-- ` /api/video-chat`
-- ` /api/screen-sharing`
+- `/api/todos`
+- `/api/md5`
+- `/api/notes`
+- `/api/expense-analyser`
+- `/api/auth`, `/api/users`
+- `/api/chat`
+- `/api/files`
+- `/api/blog`
+- `/api/instagram`
+- `/api/file-sharing`
+- `/api/video-chat`
+- `/api/screen-sharing`
 
 For exact handlers, see `src/index.ts`.
 
@@ -87,8 +92,14 @@ Current suite:
 - `tests/integration/video-chat.routes.test.ts`
 - `tests/integration/screen-sharing.routes.test.ts`
 
+## End-to-End Tests
+
+Beyond these mocked integration tests, full-stack [Playwright](https://playwright.dev/) tests exercise this backend for real (live HTTP/WebSocket calls against a Docker Postgres). They live in `../e2e` and run from the repo root with `bun run test:e2e`. See the [E2E README](../e2e/README.md).
+
 ## Useful Commands
 
 - Build: `bun run build`
+- Start built server: `bun run start`
 - Prisma Studio: `bun prisma:studio`
+- Deploy migrations: `bun prisma:migrate:deploy`
 - Stop Postgres (repo root): `docker compose down`

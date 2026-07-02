@@ -78,7 +78,12 @@ export function TodoApp() {
               disabled={adding}
               className="flex-1"
             />
-            <Button onClick={handleAddTodo} size="icon" disabled={adding || inputValue.trim() === ""}>
+            <Button
+              onClick={handleAddTodo}
+              size="icon"
+              disabled={adding || inputValue.trim() === ""}
+              aria-label="Add todo"
+            >
               {adding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -128,6 +133,7 @@ export function TodoApp() {
                         size="icon"
                         onClick={() => deleteTodo(todo.id)}
                         className="text-destructive hover:text-destructive"
+                        aria-label={`Delete ${todo.text}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
